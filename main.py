@@ -54,8 +54,17 @@ def cdist(start, end, step):
 
     return out
 
+# determine if a number is an integer
+def isint(n):
+    try:
+        as_int(n, strict=False)
+    except ValueError:
+        return False
+    else:
+        return True
+    
 # TODO: recive parameters
-latex = r"\int_{0}^{\infty}\int_{t}^{1}\frac{\sin a^{2}}{t}dtda"
+latex = r"\sum_{n=1}^{\infty}\sum_{n=1}^{x}\frac{x^{n}}{n!}"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -99,11 +108,11 @@ def check_bounds(expr, namespace=[x]):
     for i in preorder_stop(expr, Integral):
 
         lims = i.limits
-        syms = i.bound_symbols
         if type(lims[0]) == Symbol:
             lims = [lims]
-
-        for lim, dummy in zip(lims[::-1], syms[::-1]):
+        
+        for lim in lims[::-1]:
+            dummy = lim[0]
             lower = lim[1]
             upper = lim[2]
             if dummy in namespace:
@@ -116,15 +125,36 @@ def check_bounds(expr, namespace=[x]):
                 send_error(f"Symbol {sym} is not defined")
                 return False
             else:
-                return all([check_bounds(i.args[0], ), check_bounds(lower), check_bounds(upper)])
+                tmp = namespace[:] + [dummy]
+                check_bounds(i.args[0], namespace=tmp)
+                check_bounds(lower, namespace=tmp)
+                check_bounds(upper, namespace=tmp)
 
             namespace.append(dummy)
 
-    return True
+    for i in preorder_stop(expr, Sum):
 
+        lims = i.limits
+        if type(lims[0]) == Symbol:
+            lims = [lims]
+
+        for lim in lims[::-1]:
+            dummy = lim[0]
+            lower = lim[1]
+            upper = lim[2]
+            if dummy in namespace:
+                send_error(f"Dummy variable {dummy} has already been used")
+            elif 
+            
+    
+    
+    return True
+    
 if not check_bounds(expr):
     send_error(f"Expression {expr} is not valid")
-
+else:
+    print("accepted")
+    
 expr = expr.doit()
 
 class Snippet:

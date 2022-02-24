@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "repl_python3_ComplexGraphingCalculator"
+version = "0.1.0"
+description = ""
+authors = ["100502712 <<>>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+mpmath = "^1.2.1"
+sympy = "^1.9"
+latex2sympy-custom4 = "^0.0.4"
+antlr4-python3-runtime = "^4.7.2"
+gmpy2 = "^2.1.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
