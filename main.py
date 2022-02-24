@@ -55,7 +55,7 @@ def cdist(start, end, step):
     return out
 
 # TODO: recive parameters
-latex = r"\int_{0}^{\infty}\int_{t}^{1}\frac{\sin t^{2}}{t}dtda"
+latex = r"\int_{0}^{\infty}\int_{t}^{1}\frac{\sin a^{2}}{t}dtda"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -97,21 +97,28 @@ elif len(expr.free_symbols) > 1:
 # traverse expression and check if variables are valid at all points
 def check_bounds(expr, namespace=[x]):
     for i in preorder_stop(expr, Integral):
-        dummy = i.bound_symbols[-1]
-        lims = i.args[-1]
-        lower = lims[1]
-        upper = lims[2]
-        if dummy in namespace:
-            send_error(f"Dummy variable {dummy} has already been used")
-            return False
-        elif sym := issubset(namespace, lower.free_symbols):
-            send_error(f"Symbol {sym} is not defined")
-            return False
-        elif sym := issubset(namespace, upper.free_symbols):
-            send_error(f"Symbol {sym} is not defined")
-            return False
-        else:
-            return all([check_bounds(i.args[0]), check_bounds(lower), check_bounds(upper)])
+
+        lims = i.limits
+        syms = i.bound_symbols
+        if type(lims[0]) == Symbol:
+            lims = [lims]
+
+        for lim, dummy in zip(lims[::-1], syms[::-1]):
+            lower = lim[1]
+            upper = lim[2]
+            if dummy in namespace:
+                send_error(f"Dummy variable {dummy} has already been used")
+                return False
+            elif sym := issubset(namespace, lower.free_symbols):
+                send_error(f"Symbol {sym} is not defined")
+                return False
+            elif sym := issubset(namespace, upper.free_symbols):
+                send_error(f"Symbol {sym} is not defined")
+                return False
+            else:
+                return all([check_bounds(i.args[0], ), check_bounds(lower), check_bounds(upper)])
+
+            namespace.append(dummy)
 
     return True
 
