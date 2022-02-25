@@ -1,5 +1,6 @@
-from sympy import Symbol, Integer, Rational, Integral, Sum, nsimplify
+from sympy import Symbol, Integer, Rational, Integral, Sum, nsimplify, oo
 from sympy.core.numbers import ImaginaryUnit
+from sympy.core.compatibility import as_int
 from latex2sympy_custom4.process_latex import process_sympy
 import numpy as np
 import scipy as sp
@@ -62,9 +63,9 @@ def isint(n):
         return False
     else:
         return True
-    
+
 # TODO: recive parameters
-latex = r"\sum_{n=1}^{\infty}\sum_{n=1}^{x}\frac{x^{n}}{n!}"
+latex = r"\sum_{n=0}^{\infty}\frac{1}{n^{x}}"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -84,24 +85,36 @@ elif precision == 3:
     step = 2000
     method = "slow"
 
-x = Symbol("x")
-
 # remove \left and \right from brackets that are included by latex but are not parsed properly for some reason
 latex = latex.replace(r"\right", "")
 latex = latex.replace(r"\left", "")
 
 # process expression
 # TODO: make this time out?
-expr = process_sympy(latex)
+try:
+    expr = process_sympy(latex)
+except Exception as e:
+    send_error(f"Invalid Syntax: {e}")
+
 expr = nsimplify(expr, rational=True)
+
+# replace letters with numerical constants, and initialise other sympy symbols
+x = Symbol("x")
+pi = Symbol("pi")
+e = Symbol("e")
+gamma = Symbol("gamma")
+i = Symbol("i")
+
 print(expr)
 
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
     send_error("Too Few Variables! I don't know what to do with this!")
+    print(free_symbols)
 
 elif len(expr.free_symbols) > 1:
-    send_error("Too Many Variables! I don't know what to do with this!")
+    send_error(f"Too Many Variables: {expr.free_symbols}")
+
 
 # traverse expression and check if variables are valid at all points
 def check_bounds(expr, namespace=[x]):
@@ -110,27 +123,28 @@ def check_bounds(expr, namespace=[x]):
         lims = i.limits
         if type(lims[0]) == Symbol:
             lims = [lims]
-        
+
+        tmp_namespace = namespace[:]
         for lim in lims[::-1]:
             dummy = lim[0]
             lower = lim[1]
             upper = lim[2]
-            if dummy in namespace:
+            if dummy in tmp_namespace:
                 send_error(f"Dummy variable {dummy} has already been used")
                 return False
-            elif sym := issubset(namespace, lower.free_symbols):
+            elif sym := issubset(tmp_namespace, lower.free_symbols):
                 send_error(f"Symbol {sym} is not defined")
                 return False
-            elif sym := issubset(namespace, upper.free_symbols):
+            elif sym := issubset(tmp_namespace, upper.free_symbols):
                 send_error(f"Symbol {sym} is not defined")
                 return False
             else:
-                tmp = namespace[:] + [dummy]
+                tmp = tmp_namespace[:] + [dummy]
                 check_bounds(i.args[0], namespace=tmp)
                 check_bounds(lower, namespace=tmp)
                 check_bounds(upper, namespace=tmp)
 
-            namespace.append(dummy)
+            tmp_namespace.append(dummy)
 
     for i in preorder_stop(expr, Sum):
 
@@ -138,24 +152,42 @@ def check_bounds(expr, namespace=[x]):
         if type(lims[0]) == Symbol:
             lims = [lims]
 
+        tmp_namespace = namespace[:]
         for lim in lims[::-1]:
             dummy = lim[0]
             lower = lim[1]
             upper = lim[2]
-            if dummy in namespace:
+            lower_done = lower.doit()
+            upper_done = upper.doit()
+
+            if dummy in tmp_namespace:
                 send_error(f"Dummy variable {dummy} has already been used")
-            elif 
-            
-    
+                return False
+            elif not (isint(lower_done) or lower_done == oo or lower_done == -oo):
+                send_error(f"Lower bound {lower} is not an integer or infinity")
+                return False
+            elif not (isint(upper_done) or upper_done == oo or upper_done == -oo):
+                send_error(f"Upper bound {upper} is not an integer or infinity")
+                return False
+            else:
+                tmp = tmp_namespace[:] + [dummy]
+                check_bounds(i.args[0], namespace=tmp)
+                check_bounds(lower, namespace=tmp)
+                check_bounds(upper, namespace=tmp)
+
+            tmp_namespace.append(dummy)
     
     return True
     
 if not check_bounds(expr):
     send_error(f"Expression {expr} is not valid")
-else:
-    print("accepted")
-    
-expr = expr.doit()
+
+try:
+    expr = expr.doit()
+except:
+    send_error(f"Expression {expr} is not valid")
+
+
 
 class Snippet:
     def __init__(self, name, code):
