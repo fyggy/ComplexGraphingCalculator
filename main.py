@@ -1,4 +1,4 @@
-from sympy import Symbol, Integer, Rational, Integral, Sum, nsimplify, oo
+from sympy import Symbol, Integer, Rational, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I
 from sympy.core.numbers import ImaginaryUnit
 from sympy.core.compatibility import as_int
 from latex2sympy_custom4.process_latex import process_sympy
@@ -65,7 +65,7 @@ def isint(n):
         return True
 
 # TODO: recive parameters
-latex = r"\sum_{n=0}^{\infty}\frac{1}{n^{x}}"
+latex = r"e+x\gamma+i\pi"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -100,12 +100,12 @@ expr = nsimplify(expr, rational=True)
 
 # replace letters with numerical constants, and initialise other sympy symbols
 x = Symbol("x")
-pi = Symbol("pi")
+PI = Symbol("pi")
 e = Symbol("e")
 gamma = Symbol("gamma")
 i = Symbol("i")
 
-print(expr)
+expr = expr.subs([[PI, pi], [e, E], [gamma, EulerGamma], [i, I]])
 
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
@@ -114,7 +114,6 @@ if len(expr.free_symbols) < 1:
 
 elif len(expr.free_symbols) > 1:
     send_error(f"Too Many Variables: {expr.free_symbols}")
-
 
 # traverse expression and check if variables are valid at all points
 def check_bounds(expr, namespace=[x]):
@@ -187,8 +186,6 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
-
-
 class Snippet:
     def __init__(self, name, code):
         self.name = name
@@ -220,7 +217,15 @@ class Code:
 
 # TODO: write code snippets
 if method == "fast":
-    code_snippets = Code(...)
+    code_snippets = Code([
+        Snippet("Add", "np.add(({0}), ({1}))"),
+        Snippet("Mul", "np.multiply(({0}), ({1}))"),
+        Snippet("Pow", "np.power(({0}), ({1}))"),
+        Snippet("Integral", )
+        Snippet("gamma", "sp.gamma({0})"),
+        Snippet("loggamma", "sp.loggamma({0})"),
+        Snippet
+    ])
 elif method == "slow":
     code_snippets = Code(...)
 
