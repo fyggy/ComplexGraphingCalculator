@@ -1,4 +1,4 @@
-from sympy import Symbol, Integer, Rational, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I
+from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I
 from sympy.core.numbers import ImaginaryUnit
 from sympy.core.compatibility import as_int
 from latex2sympy_custom4.process_latex import process_sympy
@@ -191,6 +191,9 @@ class Snippet:
         self.name = name
         self.code = code
 
+    def __str__(self):
+        return f"Snippet(\"{self.name}\", \"{self.code}\")"
+
 class Code:
     def __init__(self, snippets):
         self.snippets = snippets
@@ -212,15 +215,35 @@ class Code:
 # TODO: write code snippets
 if method == "fast":
     code_snippets = Code([
-
-        Snippet("Add", "np.add(({0}), ({1}))"),
-        Snippet("Mul", "np.multiply(({0}), ({1}))"),
-        Snippet("Pow", "np.power(({0}), ({1}))"),
-        #Snippet("Sum", )
-        Snippet("gamma", "sp.gamma({0})"),
-        Snippet("loggamma", "sp.loggamma({0})"),
-        Snippet
+		Snippet("Add", "np.add(({0}), ({1}))"), 
+		Snippet("Catalan", "fp.catalan + 0j"), 
+		Snippet("ComplexInfinity", "np.inf + 0j"), 
+		Snippet("EulerGamma", "fp.euler + 0j"), 
+		Snippet("Exp1", "fp.e + 0j"), 
+		Snippet("Float", "{0} + 0j"), 
+		Snippet("GoldenRatio", "fp.phi + 0j"), 
+		Snippet("Half", "0.5 + 0j"), 
+		Snippet("ImaginaryUnit", "0 + 1j"), 
+		Snippet("Infinity", "np.inf"), 
+		Snippet("Integer", "{0} + 0j"), 
+		Snippet("Mul", "np.multiply(({0}), ({1}))"), 
+		Snippet("NegativeInfinity", "-np.inf"), 
+		Snippet("NegativeOne", "-1 + 0j"), 
+		Snippet("One", "1 + 0j"), 
+		Snippet("Pi", "fp.pi + 0j"), 
+		Snippet("Pow", "np.power(({0}), ({1}))"), 
+		Snippet("Rational", "{0} + 0j"), 
+        Snippet("Symbol", "{0}"), 
+		Snippet("TribonacciConstant", "1.839286755214161 + 0j"), 
+		Snippet("Zero", "0 + 0j"), 
+		Snippet("gamma", "sp.gamma({0})"), 
+		Snippet("loggamma", "sp.loggamma({0})")
     ])
+
+    # code_snippets.sort(key=lambda x: x.name)
+    # with open("out.txt", mode="w+") as f:
+    #     for i in code_snippets:
+    #         f.write("\t\t" + str(i) + str(", \n"))
 
 elif method == "slow":
     code_snippets = Code(...)
@@ -228,23 +251,11 @@ elif method == "slow":
 # TODO: verify that endpoints are correct
 def conv(expr):
     if expr.args == ():
-        if expr.func in [Integer, Symbol, Rational, ImaginaryUnit]:
-            if method == "fast":
-                if expr.func == ImaginaryUnit:
-                    return "complex(0, 1)"
-                else:
-                    return str(expr)
-            else:
-                tmp = str(expr)
-                if expr.func == Symbol:
-                    return tmp
-                elif expr.func == ImaginaryUnit:
-                    return "mpc(0, 1)"
-                else:
-                    return mpmathify(str(expr))
+        head = expr.func
+        if head in [Float, Rational, Integer, Symbol]:
+            return code_snippets.get_by_name(head.__name__).code.format(str(expr))
         else:
-            send_error(f"Fatal Error: {str(expr)} is unknown endpoint with class {expr.func}")
-            return False
+            return code_snippets.get_by_name(head.__name__).code
 
     head = expr.func
     args = expr.args
@@ -253,7 +264,9 @@ def conv(expr):
     return head_code.format(*arg_codes)
 
 # TODO: write wrapper
-wrapper = "..."
+wrapper = """
+def {0}(x):
+    """
 
 def create_func(expr, name):
     code = conv(expr)
