@@ -38,10 +38,8 @@ def f(t1, t2, x):
     try:
         return 3 * sp.gamma(np.power(x, (-(t1 * fp.ln(t2) * x)) + 1))
     except OverflowError as e:
-        print(e)
         return np.inf
     except ValueError as e:
-        print(e)
         return np.nan
 
 funcs = [broadcast(mpmath_in)]

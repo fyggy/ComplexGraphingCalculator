@@ -8,6 +8,7 @@ import gmpy2 as gm
 import mpmath as mp
 from mpmath import fp
 import math as m
+import functools as ft
 
 import sympy as sy
 # helper functions
@@ -55,7 +56,7 @@ def cdist(start, end, step):
 
     return out
 
-# determine if a number is an integer
+# determine if a sympy number is an integer
 def isint(n):
     try:
         as_int(n, strict=False)
@@ -64,8 +65,20 @@ def isint(n):
     else:
         return True
 
+def error_wrapper(f):
+    def inner(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except ValueError:
+            return np.nan
+        except OverflowError:
+            return np.inf
+
+    return inner
+
+
 # TODO: recive parameters
-latex = r"e+x\gamma+i\pi"
+latex = r"\sum_{n=1}^{\infty}\frac{1}{n^{x}}"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -186,6 +199,8 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
+print(expr.subs(x, 3+4j))
+
 class Snippet:
     def __init__(self, name, code):
         self.name = name
@@ -230,9 +245,11 @@ if method == "fast":
 		Snippet("NegativeInfinity", "-np.inf"), 
 		Snippet("NegativeOne", "-1 + 0j"), 
 		Snippet("One", "1 + 0j"), 
-		Snippet("Pi", "fp.pi + 0j"), 
+		Snippet("Pi", "fp.pi + 0j"),
+        Snippet("Piecewise", ""),
 		Snippet("Pow", "np.power(({0}), ({1}))"), 
-		Snippet("Rational", "{0} + 0j"), 
+		Snippet("Rational", "{0} + 0j"),
+        Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda x, *args: ({0}))), )"),
         Snippet("Symbol", "{0}"), 
 		Snippet("TribonacciConstant", "1.839286755214161 + 0j"), 
 		Snippet("Zero", "0 + 0j"), 
@@ -250,22 +267,26 @@ elif method == "slow":
 
 # TODO: verify that endpoints are correct
 def conv(expr):
-    if expr.args == ():
-        head = expr.func
-        if head in [Float, Rational, Integer, Symbol]:
-            return code_snippets.get_by_name(head.__name__).code.format(str(expr))
-        else:
-            return code_snippets.get_by_name(head.__name__).code
-
     head = expr.func
     args = expr.args
     head_code = code_snippets.get_by_name(head.__name__).code
+    if args == ():
+        if head in [Float, Rational, Integer, Symbol]:
+            return head_code.format(str(expr))
+        else:
+            return head_code.code
+
+    if head.__name__ == "Piecewise":
+        sy.pprint(expr)
+        print(sy.srepr(expr),"\n", sy.srepr(head),"\n", sy.srepr(args))
+
     arg_codes = (conv(i) for i in args)
     return head_code.format(*arg_codes)
 
 # TODO: write wrapper
 wrapper = """
 def {0}(x):
+    return {1}
     """
 
 def create_func(expr, name):
@@ -273,14 +294,17 @@ def create_func(expr, name):
     code = wrapper.format(name, code)
     # TODO: set correct locals and globals
     try:
-        exec(code, globals(), locals())
-    except error as e:
+        exec(code, globals())
+    except Exception as e:
         send_error(f"Fatal Error: {e}")
         raise e
 
 if True:
     create_func(expr, "f")
     create_func(expr.diff(x), "df")
+
+print(f(124))
+print(df(24))
 
 # TODO: verify if getters are nessessary
 class Point:
