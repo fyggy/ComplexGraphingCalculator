@@ -28,16 +28,20 @@ def broadcast(func):
 funcs = [np.power,  broadcast(fp.power)]
 
 def scipy_in(x, func, lims):
-    return integ.nquad(func, lims, args=(x))
+    return integ.nquad(broadcast(func), lims, args=(x))
 
 def mpmath_in(x, func, lims):
     tmp = ft.partial(func, x=x)
-    return fp.quad(tmp, *lims)
+    return fp.nsum(tmp, *lims)
 
 def f(t1, t2, x):
     try:
-        return 3 * sp.gamma(x ** (-(t1 * fp.ln(t2) * x)))
-    except OverflowError:
+        return 3 * sp.gamma(np.power(x, (-(t1 * fp.ln(t2) * x)) + 1))
+    except OverflowError as e:
+        print(e)
+        return np.inf
+    except ValueError as e:
+        print(e)
         return np.nan
 
 funcs = [broadcast(mpmath_in)]
@@ -46,7 +50,7 @@ f = mp.memoize(f)
 
 for i in funcs:
     t1 = t.perf_counter_ns()
-    i(tester, f, [[123.4+45j, 34], [3, np.inf]])
+    print(i(tester, f, [[34, np.inf], [1, 2]]))
     t2 = t.perf_counter_ns()
 
     print(f"{i}: {t2 - t1}")

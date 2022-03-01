@@ -191,41 +191,37 @@ class Snippet:
         self.name = name
         self.code = code
 
-    def get_name(self):
-        return self.name
-
-    def get_code(self):
-        return self.code
-
 class Code:
     def __init__(self, snippets):
         self.snippets = snippets
 
-    def get_by_name(self, name):
+    def get_by_name(self, target):
         bot = 0
         top = len(self.snippets)
         while top >= bot:
             mid = (top + bot) // 2
-            if snippets[mid].get_name() == name:
-                return snippets[mid]
-            elif snippets[mid].get_name() < name:
+            if self.snippets[mid].name == target:
+                return self.snippets[mid]
+            elif self.snippets[mid].name < target:
                 bot = mid + 1
             else:
                 top = mid - 1
-        send_error(f"Fatal error: unable to find {name} among snippets")
+        send_error(f"Fatal error: unable to find {target} among snippets")
         return False
 
 # TODO: write code snippets
 if method == "fast":
     code_snippets = Code([
+
         Snippet("Add", "np.add(({0}), ({1}))"),
         Snippet("Mul", "np.multiply(({0}), ({1}))"),
         Snippet("Pow", "np.power(({0}), ({1}))"),
-        Snippet("Integral", )
+        #Snippet("Sum", )
         Snippet("gamma", "sp.gamma({0})"),
         Snippet("loggamma", "sp.loggamma({0})"),
         Snippet
     ])
+
 elif method == "slow":
     code_snippets = Code(...)
 
@@ -252,14 +248,12 @@ def conv(expr):
 
     head = expr.func
     args = expr.args
-    head_code = code_snippets.get_by_name(head.__name__)
+    head_code = code_snippets.get_by_name(head.__name__).code
     arg_codes = (conv(i) for i in args)
     return head_code.format(*arg_codes)
 
-
 # TODO: write wrapper
 wrapper = "..."
-
 
 def create_func(expr, name):
     code = conv(expr)
@@ -271,7 +265,7 @@ def create_func(expr, name):
         send_error(f"Fatal Error: {e}")
         raise e
 
-if False:
+if True:
     create_func(expr, "f")
     create_func(expr.diff(x), "df")
 
