@@ -9,6 +9,7 @@ import mpmath as mp
 from mpmath import fp
 import math as m
 import functools as ft
+from operator import lt, le, gt, ge
 
 import sympy as sy
 # helper functions
@@ -83,8 +84,21 @@ def swap(func):
     return inner
 
 def better_ineq(a, b, ineq):
-    if type(a) == complex and a.real == 0:
-        return a.real
+    if type(a) == complex and a.imag == 0:
+        a = a.real
+    if type(b) == complex and b.imag == 0:
+        b = b.real
+
+    return ineq(a, b)
+
+def better_int(n):
+    if type(n) == complex and n.imag == 0:
+        n = n.real
+
+    try:
+        return int(n)
+    except OverflowError:
+        return np.inf
 
 # TODO: recive parameters
 latex = r"\sum_{n=1}^{\infty}\frac{1}{n^{x}}"
@@ -251,7 +265,7 @@ def _polygamma(m, z):
 
 # TODO: write code snippets
 if method == "fast":
-    code_snippets = [
+    code_snippets = Code([
         Snippet("Add", "np.add(({0}), ({1}))"),
         Snippet("Ai", "sp.airy({0})[0]"),
         Snippet("Bi", "sp.airy({0})[2]"),
@@ -267,12 +281,12 @@ if method == "fast":
         Snippet("ExprCondPair", "({0}) if ({1}) else"),
         Snippet("Float", "{0} + 0j"),
         Snippet("GoldenRatio", "fp.phi + 0j"),
-        Snippet("GreaterThan", "({0}) >= ({1})"),
+        Snippet("GreaterThan", "better_ineq({0}, {1}, gt)"),
         Snippet("Half", "0.5 + 0j"),
         Snippet("ImaginaryUnit", "0 + 1j"),
         Snippet("Infinity", "np.inf"),
         Snippet("Integer", "{0} + 0j"),
-        Snippet("LessThan", "({0}) <= ({1})"),
+        Snippet("LessThan", "better_ineq({0}, {1}, lt)"),
         Snippet("Mul", "np.multiply(({0}), ({1}))"),
         Snippet("NegativeInfinity", "-np.inf"),
         Snippet("NegativeOne", "-1 + 0j"),
@@ -282,12 +296,12 @@ if method == "fast":
         Snippet("Pow", "np.power(({0}), ({1}))"),
         Snippet("Rational", "{0} + 0j"),
         Snippet("Si", "sp.sici({0})[0]"),
-        Snippet("StrictGreaterThan", "({0}) > ({1})"),
-        Snippet("StrictLessThan", "({0}) < ({1})"),
-        Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda {var}: ({0})), {var_eqs}), {1})"),
+        Snippet("StrictGreaterThan", "better_ineq({0}, {1}, ge)"),
+        Snippet("StrictLessThan", "better_ineq({0}, {1}, le)"),
+        Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda {var}: ({0})), {var_eqs}), {1}, method=\"r+s+e\")"),
         Snippet("Symbol", "{0}"),
         Snippet("TribonacciConstant", "1.839286755214161 + 0j"),
-        Snippet("Tuple", "[({0}), ({1})]"),
+        Snippet("Tuple", "[better_int({0}), better_int({1})]"),
         Snippet("Zero", "0 + 0j"),
         Snippet("beta", "sp.beta(({0}), ({1})"),
         Snippet("gamma", "sp.gamma({0})"),
@@ -297,12 +311,12 @@ if method == "fast":
         Snippet("polygamma", "_polygamma(({1}), ({0}))"),
         Snippet("re", "({0}).real"),
         Snippet("zeta", "fp.zeta({0})"),
-    ]
+    ])
 
-    code_snippets.sort(key=lambda x: x.name)
-    with open("out.txt", mode="w+") as f:
-        for i in code_snippets:
-            f.write("\t\t" + str(i) + str(", \n"))
+    # code_snippets.sort(key=lambda x: x.name)
+    # with open("out.txt", mode="w+") as f:
+    #     for i in code_snippets:
+    #         f.write("\t\t" + str(i) + str(", \n"))
 
 elif method == "slow":
     code_snippets = Code(...)
@@ -324,13 +338,10 @@ def conv(expr):
     arg_codes = (conv(i) for i in args)
 
     if head.__name__ == "Sum":
-        lambda_vars = list(args[0].free_symbols)
-        return head_code.format(*arg_codes, var=", ".join([str(i) for i in lambda_vars]),
-                                var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars if i not in expr.bound_symbols]))
-        print(expr.args[0].free_symbols)
-        print(sy.srepr(expr))
-        print(sy.srepr(head))
-        print(sy.srepr(args))
+        lambda_vars = list((args[0].free_symbols).difference(expr.bound_symbols))
+        return head_code.format(*arg_codes, var=", ".join([str(i) for i in expr.bound_symbols]) + ", " +
+                                                ", ".join([str(i) for i in lambda_vars]),
+                                var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
 
     else:
         return head_code.format(*arg_codes)
@@ -356,8 +367,13 @@ if True:
     create_func(expr, "f")
     # create_func(expr.diff(x), "df")
 
-print(f(124))
-print(df(24))
+def f(x):
+    return (fp.zeta(x)) if (better_ineq((x).real, 1 + 0j, ge)) else (
+        fp.nsum(ft.partial(error_wrapper(lambda n, x: (np.power((n), (np.multiply((-1 + 0j), (x)))))), x=x),
+                [better_int(1 + 0j), better_int(np.inf)], method="r+s+e")) if ((True)) else None
+
+print(f(-4))
+# print(df(24))
 
 # TODO: verify if getters are nessessary
 class Point:
