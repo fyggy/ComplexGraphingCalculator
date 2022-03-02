@@ -24,7 +24,11 @@ def broadcast(func):
         return out
     return inner
 
+def swap(func):
+    def inner(a, b):
+        func(b, a)
 
+    return inner
 funcs = [np.power,  broadcast(fp.power)]
 
 def scipy_in(x, func, lims):
@@ -42,13 +46,13 @@ def f(t1, t2, x):
     except ValueError as e:
         return np.nan
 
-funcs = [broadcast(mpmath_in)]
+funcs = [broadcast(fp.airyai), lambda z: sp.airy(z)[0]]
 
 f = mp.memoize(f)
 
 for i in funcs:
     t1 = t.perf_counter_ns()
-    print(i(tester, f, [[34, np.inf], [1, 2]]))
+    i(tester)
     t2 = t.perf_counter_ns()
 
     print(f"{i}: {t2 - t1}")

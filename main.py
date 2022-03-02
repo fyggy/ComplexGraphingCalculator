@@ -76,6 +76,12 @@ def error_wrapper(f):
 
     return inner
 
+def swap(func):
+    def inner(a, b):
+        return func(b, a)
+
+    return inner
+    
 
 # TODO: recive parameters
 latex = r"\sum_{n=1}^{\infty}\frac{1}{n^{x}}"
@@ -129,6 +135,7 @@ elif len(expr.free_symbols) > 1:
     send_error(f"Too Many Variables: {expr.free_symbols}")
 
 # traverse expression and check if variables are valid at all points
+# TODO: add polygamma m checks
 def check_bounds(expr, namespace=[x]):
     for i in preorder_stop(expr, Integral):
 
@@ -227,12 +234,26 @@ class Code:
         send_error(f"Fatal error: unable to find {target} among snippets")
         return False
 
+broadcasts = {"polygamma": broadcast(fp.polygamma), 
+              "li": broadcast(swap(fp.li)), 
+              "zeta": broadcast(fp.zeta)}
+
+def _polygamma(m, z):
+    if m == 0:
+        return sp.digamma(m, z)
+    else:
+        return broadcasts["polygamma"](z, m)
+        
 # TODO: write code snippets
 if method == "fast":
     code_snippets = Code([
 		Snippet("Add", "np.add(({0}), ({1}))"), 
+        Snippet("Ai", "sp.airy({0})[0]"), 
+        Snippet("Bi", "sp.airy({0})[2]"), 
 		Snippet("Catalan", "fp.catalan + 0j"), 
+        Snippet("Ci", "sp.sici({0})[1]"),
 		Snippet("ComplexInfinity", "np.inf + 0j"), 
+        Snippet("Ei", "sp.exp1({0})"), 
 		Snippet("EulerGamma", "fp.euler + 0j"), 
 		Snippet("Exp1", "fp.e + 0j"), 
 		Snippet("Float", "{0} + 0j"), 
@@ -249,12 +270,16 @@ if method == "fast":
         Snippet("Piecewise", ""),
 		Snippet("Pow", "np.power(({0}), ({1}))"), 
 		Snippet("Rational", "{0} + 0j"),
+        Snippet("Si", "sp.sici({0})[0]"), 
         Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda x, *args: ({0}))), )"),
         Snippet("Symbol", "{0}"), 
 		Snippet("TribonacciConstant", "1.839286755214161 + 0j"), 
 		Snippet("Zero", "0 + 0j"), 
+        Snippet("beta", "sp.beta(({0}), ({1})"), 
 		Snippet("gamma", "sp.gamma({0})"), 
-		Snippet("loggamma", "sp.loggamma({0})")
+        Snippet("li", "_li({0})"), 
+		Snippet("loggamma", "sp.loggamma({0})"),
+        Snippet("polygamma", "_polygamma(({1}), ({0}))")
     ])
 
     # code_snippets.sort(key=lambda x: x.name)
