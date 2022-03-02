@@ -81,7 +81,10 @@ def swap(func):
         return func(b, a)
 
     return inner
-    
+
+def better_ineq(a, b, ineq):
+    if type(a) == complex and a.real == 0:
+        return a.real
 
 # TODO: recive parameters
 latex = r"\sum_{n=1}^{\infty}\frac{1}{n^{x}}"
@@ -129,7 +132,6 @@ expr = expr.subs([[PI, pi], [e, E], [gamma, EulerGamma], [i, I]])
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
     send_error("Too Few Variables! I don't know what to do with this!")
-    print(free_symbols)
 
 elif len(expr.free_symbols) > 1:
     send_error(f"Too Many Variables: {expr.free_symbols}")
@@ -206,8 +208,6 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
-print(expr.subs(x, 3+4j))
-
 class Snippet:
     def __init__(self, name, code):
         self.name = name
@@ -221,21 +221,26 @@ class Code:
         self.snippets = snippets
 
     def get_by_name(self, target):
+
         bot = 0
-        top = len(self.snippets)
+        top = len(self.snippets) - 1
         while top >= bot:
             mid = (top + bot) // 2
-            if self.snippets[mid].name == target:
-                return self.snippets[mid]
-            elif self.snippets[mid].name < target:
-                bot = mid + 1
-            else:
+            current = self.snippets[mid]
+            if current.name == target:
+                return current
+            elif current.name > target:
                 top = mid - 1
+            else:
+                bot = mid + 1
         send_error(f"Fatal error: unable to find {target} among snippets")
         return False
 
-broadcasts = {"polygamma": broadcast(fp.polygamma), 
-              "li": broadcast(swap(fp.li)), 
+def broadcast(f):
+    return False
+
+broadcasts = {"polygamma": broadcast(fp.polygamma),
+              "li": broadcast(swap(fp.li)),
               "zeta": broadcast(fp.zeta)}
 
 def _polygamma(m, z):
@@ -243,49 +248,61 @@ def _polygamma(m, z):
         return sp.digamma(m, z)
     else:
         return broadcasts["polygamma"](z, m)
-        
+
 # TODO: write code snippets
 if method == "fast":
-    code_snippets = Code([
-		Snippet("Add", "np.add(({0}), ({1}))"), 
-        Snippet("Ai", "sp.airy({0})[0]"), 
-        Snippet("Bi", "sp.airy({0})[2]"), 
-		Snippet("Catalan", "fp.catalan + 0j"), 
+    code_snippets = [
+        Snippet("Add", "np.add(({0}), ({1}))"),
+        Snippet("Ai", "sp.airy({0})[0]"),
+        Snippet("Bi", "sp.airy({0})[2]"),
+        Snippet("BooleanFalse", "(False)"),
+        Snippet("BooleanTrue", "(True)"),
+        Snippet("Catalan", "fp.catalan + 0j"),
         Snippet("Ci", "sp.sici({0})[1]"),
-		Snippet("ComplexInfinity", "np.inf + 0j"), 
-        Snippet("Ei", "sp.exp1({0})"), 
-		Snippet("EulerGamma", "fp.euler + 0j"), 
-		Snippet("Exp1", "fp.e + 0j"), 
-		Snippet("Float", "{0} + 0j"), 
-		Snippet("GoldenRatio", "fp.phi + 0j"), 
-		Snippet("Half", "0.5 + 0j"), 
-		Snippet("ImaginaryUnit", "0 + 1j"), 
-		Snippet("Infinity", "np.inf"), 
-		Snippet("Integer", "{0} + 0j"), 
-		Snippet("Mul", "np.multiply(({0}), ({1}))"), 
-		Snippet("NegativeInfinity", "-np.inf"), 
-		Snippet("NegativeOne", "-1 + 0j"), 
-		Snippet("One", "1 + 0j"), 
-		Snippet("Pi", "fp.pi + 0j"),
-        Snippet("Piecewise", ""),
-		Snippet("Pow", "np.power(({0}), ({1}))"), 
-		Snippet("Rational", "{0} + 0j"),
-        Snippet("Si", "sp.sici({0})[0]"), 
-        Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda x, *args: ({0}))), )"),
-        Snippet("Symbol", "{0}"), 
-		Snippet("TribonacciConstant", "1.839286755214161 + 0j"), 
-		Snippet("Zero", "0 + 0j"), 
-        Snippet("beta", "sp.beta(({0}), ({1})"), 
-		Snippet("gamma", "sp.gamma({0})"), 
-        Snippet("li", "_li({0})"), 
-		Snippet("loggamma", "sp.loggamma({0})"),
-        Snippet("polygamma", "_polygamma(({1}), ({0}))")
-    ])
+        Snippet("ComplexInfinity", "np.inf + 0j"),
+        Snippet("Ei", "sp.exp1({0})"),
+        Snippet("Equality", "({0}) == ({1})"),
+        Snippet("EulerGamma", "fp.euler + 0j"),
+        Snippet("Exp1", "fp.e + 0j"),
+        Snippet("ExprCondPair", "({0}) if ({1}) else"),
+        Snippet("Float", "{0} + 0j"),
+        Snippet("GoldenRatio", "fp.phi + 0j"),
+        Snippet("GreaterThan", "({0}) >= ({1})"),
+        Snippet("Half", "0.5 + 0j"),
+        Snippet("ImaginaryUnit", "0 + 1j"),
+        Snippet("Infinity", "np.inf"),
+        Snippet("Integer", "{0} + 0j"),
+        Snippet("LessThan", "({0}) <= ({1})"),
+        Snippet("Mul", "np.multiply(({0}), ({1}))"),
+        Snippet("NegativeInfinity", "-np.inf"),
+        Snippet("NegativeOne", "-1 + 0j"),
+        Snippet("One", "1 + 0j"),
+        Snippet("Pi", "fp.pi + 0j"),
+        Snippet("Piecewise", "{0} {1} None"),
+        Snippet("Pow", "np.power(({0}), ({1}))"),
+        Snippet("Rational", "{0} + 0j"),
+        Snippet("Si", "sp.sici({0})[0]"),
+        Snippet("StrictGreaterThan", "({0}) > ({1})"),
+        Snippet("StrictLessThan", "({0}) < ({1})"),
+        Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda {var}: ({0})), {var_eqs}), {1})"),
+        Snippet("Symbol", "{0}"),
+        Snippet("TribonacciConstant", "1.839286755214161 + 0j"),
+        Snippet("Tuple", "[({0}), ({1})]"),
+        Snippet("Zero", "0 + 0j"),
+        Snippet("beta", "sp.beta(({0}), ({1})"),
+        Snippet("gamma", "sp.gamma({0})"),
+        Snippet("im", "({0}).imag"),
+        Snippet("li", "_li({0})"),
+        Snippet("loggamma", "sp.loggamma({0})"),
+        Snippet("polygamma", "_polygamma(({1}), ({0}))"),
+        Snippet("re", "({0}).real"),
+        Snippet("zeta", "fp.zeta({0})"),
+    ]
 
-    # code_snippets.sort(key=lambda x: x.name)
-    # with open("out.txt", mode="w+") as f:
-    #     for i in code_snippets:
-    #         f.write("\t\t" + str(i) + str(", \n"))
+    code_snippets.sort(key=lambda x: x.name)
+    with open("out.txt", mode="w+") as f:
+        for i in code_snippets:
+            f.write("\t\t" + str(i) + str(", \n"))
 
 elif method == "slow":
     code_snippets = Code(...)
@@ -299,14 +316,24 @@ def conv(expr):
         if head in [Float, Rational, Integer, Symbol]:
             return head_code.format(str(expr))
         else:
-            return head_code.code
+            return head_code
 
-    if head.__name__ == "Piecewise":
-        sy.pprint(expr)
-        print(sy.srepr(expr),"\n", sy.srepr(head),"\n", sy.srepr(args))
+    if head.__name__ == "Tuple":
+        args = args[1:]
 
     arg_codes = (conv(i) for i in args)
-    return head_code.format(*arg_codes)
+
+    if head.__name__ == "Sum":
+        lambda_vars = list(args[0].free_symbols)
+        return head_code.format(*arg_codes, var=", ".join([str(i) for i in lambda_vars]),
+                                var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars if i not in expr.bound_symbols]))
+        print(expr.args[0].free_symbols)
+        print(sy.srepr(expr))
+        print(sy.srepr(head))
+        print(sy.srepr(args))
+
+    else:
+        return head_code.format(*arg_codes)
 
 # TODO: write wrapper
 wrapper = """
@@ -317,6 +344,7 @@ def {0}(x):
 def create_func(expr, name):
     code = conv(expr)
     code = wrapper.format(name, code)
+    print(code)
     # TODO: set correct locals and globals
     try:
         exec(code, globals())
@@ -326,7 +354,7 @@ def create_func(expr, name):
 
 if True:
     create_func(expr, "f")
-    create_func(expr.diff(x), "df")
+    # create_func(expr.diff(x), "df")
 
 print(f(124))
 print(df(24))
