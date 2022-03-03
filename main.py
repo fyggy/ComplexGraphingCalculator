@@ -10,6 +10,7 @@ from mpmath import fp
 import math as m
 import functools as ft
 from operator import lt, le, gt, ge
+import inspect
 
 import sympy as sy
 # helper functions
@@ -101,7 +102,7 @@ def better_int(n):
         return np.inf
 
 # TODO: recive parameters
-latex = r"\sum_{n=1}^{\infty}\frac{1}{n^{x}}"
+latex = r"\sum_{n=0}^{20}\frac{20!}{n!\left(20-n\right)!}x^{20-n}\frac{1}{x}^{n}"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -213,7 +214,9 @@ def check_bounds(expr, namespace=[x]):
             tmp_namespace.append(dummy)
     
     return True
-    
+
+
+
 if not check_bounds(expr):
     send_error(f"Expression {expr} is not valid")
 
@@ -264,16 +267,20 @@ def _polygamma(m, z):
         return broadcasts["polygamma"](z, m)
 
 # TODO: write code snippets
+# TODO: fix the trig funcs
 if method == "fast":
     code_snippets = Code([
+        Snippet("Abs", "np.absolute({0})"), 
         Snippet("Add", "np.add(({0}), ({1}))"),
         Snippet("Ai", "sp.airy({0})[0]"),
         Snippet("Bi", "sp.airy({0})[2]"),
-        Snippet("BooleanFalse", "(False)"),
-        Snippet("BooleanTrue", "(True)"),
+        Snippet("BooleanFalse", "False"),
+        Snippet("BooleanTrue", "True"),
         Snippet("Catalan", "fp.catalan + 0j"),
         Snippet("Ci", "sp.sici({0})[1]"),
         Snippet("ComplexInfinity", "np.inf + 0j"),
+        Snippet("Cos", "np.cos({0})"), 
+        Snippet("Cosh", "np.cosh({0})"), 
         Snippet("Ei", "sp.exp1({0})"),
         Snippet("Equality", "({0}) == ({1})"),
         Snippet("EulerGamma", "fp.euler + 0j"),
@@ -296,10 +303,14 @@ if method == "fast":
         Snippet("Pow", "np.power(({0}), ({1}))"),
         Snippet("Rational", "{0} + 0j"),
         Snippet("Si", "sp.sici({0})[0]"),
+        Snippet("Sin", "np.sin({0})"), 
+        Snippet("Sinh", "np.sinh({0})"), 
         Snippet("StrictGreaterThan", "better_ineq({0}, {1}, ge)"),
         Snippet("StrictLessThan", "better_ineq({0}, {1}, le)"),
-        Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda {var}: ({0})), {var_eqs}), {1}, method=\"r+s+e\")"),
+        Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda {var}: ({0})), {var_eqs}), {1}, method=\"r+s\")"),
         Snippet("Symbol", "{0}"),
+        Snippet("Tan", "np.tan({0})"), 
+        Snippet("Tanh", "np.tanh({0})"), 
         Snippet("TribonacciConstant", "1.839286755214161 + 0j"),
         Snippet("Tuple", "[better_int({0}), better_int({1})]"),
         Snippet("Zero", "0 + 0j"),
@@ -335,6 +346,10 @@ def conv(expr):
     if head.__name__ == "Tuple":
         args = args[1:]
 
+    if head.__name__ in ["Add", "Mul"]:
+        args = expr.as_two_terms()
+        
+
     arg_codes = (conv(i) for i in args)
 
     if head.__name__ == "Sum":
@@ -365,15 +380,10 @@ def create_func(expr, name):
 
 if True:
     create_func(expr, "f")
-    # create_func(expr.diff(x), "df")
+    create_func(expr.diff(x), "df")
 
-def f(x):
-    return (fp.zeta(x)) if (better_ineq((x).real, 1 + 0j, ge)) else (
-        fp.nsum(ft.partial(error_wrapper(lambda n, x: (np.power((n), (np.multiply((-1 + 0j), (x)))))), x=x),
-                [better_int(1 + 0j), better_int(np.inf)], method="r+s+e")) if ((True)) else None
-
-print(f(-4))
-# print(df(24))
+print(f(1))
+print(df(24))
 
 # TODO: verify if getters are nessessary
 class Point:
