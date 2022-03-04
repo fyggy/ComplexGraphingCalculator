@@ -1,6 +1,5 @@
 from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I
 from sympy.core.numbers import ImaginaryUnit
-from sympy.core.compatibility import as_int
 from latex2sympy_custom4.process_latex import process_sympy
 import numpy as np
 import scipy as sp
@@ -10,99 +9,14 @@ from mpmath import fp
 import math as m
 import functools as ft
 from operator import lt, le, gt, ge
-import inspect
-
+from helpers import *
+from lines import *
+import matplotlib.pyplot as plt
+import matplotlib.bezier as bz
 import sympy as sy
-# helper functions
-
-# send an error back to php
-# TODO: create proper send_error
-def send_error(msg):
-    print(msg)
-    input(">>> ")
-
-# generator function to traverse an expr and yield everything of an object
-# for example, if head = sy.Integral, then preorder_stop will traverse expr and yield all integrals in the expression
-# however, if an integral is nested within another integral, it will not yield that integral
-def preorder_stop(expr, head):
-    if expr.func == head:
-        yield expr
-    else:
-        for arg in expr.args:
-            for i in preorder_stop(arg, head):
-                yield i
-
-# returns the first element in subset that is not in superset, otherwise returns none
-# useful for error checking
-def issubset(superset, subset):
-    for i in subset:
-        if i not in superset:
-            return i
-
-    return None
-
-# create an array of complex numbers spaced equally by lengths of magnitude step
-# different to crange as the step can be specified, and the final number will likely not be equally spaced from the
-# real end point
-def cdist(start, end, step):
-    delta = end - start
-    difference = (delta / abs(delta)) * step
-
-    num = int(abs(end - start) // step)
-    current = start
-
-    out = np.zeros(num, dtype=np.complex128)
-    for i in range(num):
-        out[i] = current
-        current += difference
-
-    return out
-
-# determine if a sympy number is an integer
-def isint(n):
-    try:
-        as_int(n, strict=False)
-    except ValueError:
-        return False
-    else:
-        return True
-
-def error_wrapper(f):
-    def inner(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except ValueError:
-            return np.nan
-        except OverflowError:
-            return np.inf
-
-    return inner
-
-def swap(func):
-    def inner(a, b):
-        return func(b, a)
-
-    return inner
-
-def better_ineq(a, b, ineq):
-    if type(a) == complex and a.imag == 0:
-        a = a.real
-    if type(b) == complex and b.imag == 0:
-        b = b.real
-
-    return ineq(a, b)
-
-def better_int(n):
-    if type(n) == complex and n.imag == 0:
-        n = n.real
-
-    try:
-        return int(n)
-    except OverflowError:
-        return np.inf
 
 # TODO: recive parameters
-latex = r"\sum_{n=0}^{20}\frac{20!}{n!\left(20-n\right)!}x^{20-n}\frac{1}{x}^{n}"
+latex = r"\sum_{n=0}^{5}\frac{5!}{n!\left(5-n\right)!}x^{5-n}\frac{1}{x}^{n}"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -370,7 +284,7 @@ def {0}(x):
 def create_func(expr, name):
     code = conv(expr)
     code = wrapper.format(name, code)
-    print(code)
+
     # TODO: set correct locals and globals
     try:
         exec(code, globals())
@@ -382,131 +296,38 @@ if True:
     create_func(expr, "f")
     create_func(expr.diff(x), "df")
 
-print(f(1))
-print(df(24))
 
-# TODO: verify if getters are nessessary
-class Point:
-    def __init__(self, input, output, derivative):
-        self.input = input
-        self.output = output
-        self.derivative = derivative
-
-    def get_input(self):
-        return self.input
-
-    def get_output(self):
-        return self.output
-
-    def get_derivative(self):
-        return self.derivative
-
-class LinePart:
-    def __init__(self, points):
-        self.points = points
-
-    @staticmethod
-    def convert_single(z0, z1, d0, d1):
-        x0, y0 = z0.real, z0.imag
-        x1, y1 = z1.real, z1.imag
-
-        if d0.real == 0 and d1.real == 0:
-            tmp = (z0 + z1) / 2
-            return (tmp.real, tmp.imag)
-
-        elif d0.real == 0:
-            m1 = d1.imag / d1.real
-            return (x0, m1 * (x0 - x1) + y1)
-
-        elif d1.real == 0:
-            m0 = d0.imag / d0.real
-            return (x1, m0 * (x1 - x0) + y0)
-
-        else:
-            m0 = d0.imag / d0.real
-            m1 = d1.imag / d1.real
-
-            if m0 == m1:
-                tmp = (z0 + z1) / 2
-                return (tmp.real, tmp.imag)
-
-            else:
-                tmp = (m0 * x0 - m1 * x1 + y1 - y0) / (m0 - m1)
-                return (tmp, m0 * (tmp - x0) + y0)
-
-    def convert(self):
-        output = [0] * (2 * len(self.points) + 1)
-        next = self.points[0]
-        for i in range(len(self.points) - 1):
-            current = self.points[i]
-            next = self.points[i + 1]
-            z0 = current.get_output()
-            z1 = next.get_output()
-            d0 = current.get_derivative()
-            d1 = next.get_derivative()
-            output[2 * i] = [z0.real, z0.imag]
-            output[2 * i + 1] = list(LinePart.convert_single(z0, z1, d0, d1))
-
-        output[-1] = [next.real, next.imag]
-        return output
-
-class Line:
-    def __init__(self, start, end, step, function, dfunction):
-        self.start = start
-        self.end = end
-        self.step = step
-        self.function = function
-        self.dfunction = dfunction
-        self.input = np.linspace(start, end, num=step, dtype=np.complex128)
-
-    def calculate(self):
-        output = self.function(self.input)
-        doutput = self.dfunction(self.input)
-        self.points = [Point] * len(self.input)
-        for i, inp, out, dout in enumerate(zip(self.input, output, doutput)):
-            self.points[i] = Point(inp, out, dout)
-
-    def trim(self):
-        for i, point in enumerate(self.points):
-            out = point.get_output()
-            dout = point.get_derivative()
-            if np.isinf(out) or np.isnan(out) or np.isinf(dout) or np.isnan(dout):
-                del self.points[i]
-
-    @staticmethod
-    def break_up(points):
-        output = []
-        for i in range(len(points) - 1):
-            current = points[i]
-            next = points[i + 1]
-            diff = next.get_input() - current.get_input()
-
-            #TODO: make step work properly
-            if abs(diff) > self.step:
-                output.append(LinePart(points[:i]))
-                output += Line.break_up(points[i+1:])
-                return output
-
-            else:
-                s = abs(diff)
-                check = ((abs(next.get_output() - current.get_output() - (s * current.get_derivative()))) ** 2) / (abs(current.get_output()) + s)
-                if check >= 0.1:
-                    output.append(LinePart(points[:i]))
-                    output += Line.break_up(points[i+1:])
-                    return output
-
-    def break_fully(self):
-        self.lineparts = Line.break_up(self.points)
-
-    def convert(self):
-        output = []
-        for i in self.lineparts:
-            output.append(i.convert())
-
-        return output
+horizontal = []
+starts = cdist(complex(botx, boty), complex(botx, topy), linestep)
+for start, end in zip(starts, starts - botx + topx):
+    horizontal.append(Line(start, end, step, f, df))
 
 
+vertical = []
+starts = cdist(complex(botx, boty), complex(topx, boty), linestep)
+for start, end in zip(starts, starts + (1j) * (topy - boty)):
+    vertical.append(Line(start, end, step, f, df))
+
+linepoints = {"horizontal": [], "vertical": []}
+
+for line in horizontal:
+    line.calculate()
+    line.trim()
+    line.break_fully()
+    linepoints["horizontal"].append(line.convert())
+
+for line in vertical:
+    line.calculate()
+    line.trim()
+    line.break_fully()
+    linepoints["vertical"].append(line.convert())
+
+fig, ax = plt.subplots()
+tmph = linepoints["horizontal"]
+for i in range(len(tmph), 2):
+    nodes = np.array(tmph[i], tmph[i+1], tmph[i+2])
+    curve = bezier.Curve(nodes, degree=2)
+    curve.plot(num_pts=256, ax=ax)
 
 
-
-
+plt.show()
