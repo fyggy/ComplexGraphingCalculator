@@ -1,4 +1,4 @@
-from numpy import linspace, isnan, isinf, complex128
+from numpy import linspace, isnan, isinf, complex128, sign
 
 # TODO: verify if getters are nessessary
 class Point:
@@ -7,27 +7,24 @@ class Point:
         self.output = output
         self.derivative = derivative
 
-    def get_input(self):
-        return self.input
-
-    def get_output(self):
-        return self.output
-
-    def get_derivative(self):
-        return self.derivative
-
     def __str__(self):
         return f"({self.input}, {self.output})"
-        
+
+class DeletedPoint(Point):
+    input = None
+    output = None
+    derivative = None
+
 class LinePart:
     def __init__(self, points):
         self.points = points
 
     @staticmethod
-    def convert_single(z0, z1, d0, d1):
+    def convert_single(z0, z1, d0, d1, direction):
         x0, y0 = z0.real, z0.imag
         x1, y1 = z1.real, z1.imag
-
+        d0 *= direction
+        d1 *= direction
         if d0.real == 0 and d1.real == 0:
             tmp = (z0 + z1) / 2
             return (tmp.real, tmp.imag)
@@ -52,19 +49,19 @@ class LinePart:
                 tmp = (m0 * x0 - m1 * x1 + y1 - y0) / (m0 - m1)
                 return (tmp, m0 * (tmp - x0) + y0)
 
-    def convert(self):
-        output = [0] * (2 * len(self.points) + 1)
+    def convert(self, direction):
+        output = [0] * (2 * len(self.points) - 1)
         next = self.points[0]
+        z1 = next.output
         for i in range(len(self.points) - 1):
             current = self.points[i]
             next = self.points[i + 1]
-            z0 = current.get_output()
-            z1 = next.get_output()
-            d0 = current.get_derivative()
-            d1 = next.get_derivative()
+            z0 = current.output
+            z1 = next.output
+            d0 = current.derivative
+            d1 = next.derivative
             output[2 * i] = [z0.real, z0.imag]
-            output[2 * i + 1] = list(LinePart.convert_single(z0, z1, d0, d1))
-
+            output[2 * i + 1] = list(LinePart.convert_single(z0, z1, d0, d1, direction))
         output[-1] = [z1.real, z1.imag]
         return output
 
@@ -86,44 +83,53 @@ class Line:
 
     def trim(self):
         for i, point in enumerate(self.points):
-            out = point.get_output()
-            dout = point.get_derivative()
+            out = point.output
+            dout = point.derivative
             if isinf(out) or isnan(out) or isinf(dout) or isnan(dout):
-                del self.points[i]
+                self.points[i] = DeletedPoint
 
     @staticmethod
     def break_up(points):
+        if len(points) == 0:
+            return []
+
         output = []
         for i in range(len(points) - 1):
             current = points[i]
-            next = points[i + 1]
-            diff = next.get_input() - current.get_input()
-
-            #TODO: make this work properly
-            if abs(diff) > 0.1:
-                output.append(LinePart(points[:i]))
+            print(current.__class__)
+            if current == DeletedPoint:
+                while current == DeletedPoint:
+                    i += 1
+                    current = points[i]
+                print("broken2")
+                output.append(LinePart(points[:i+1]))
                 output += Line.break_up(points[i+1:])
                 return output
 
-            else:
-                s = abs(diff)
-                check = ((abs(next.get_output() - current.get_output() - (s * current.get_derivative()))) ** 2) / (abs(current.get_output()) + s)
-                if check >= 0.1:
-                    output.append(LinePart(points[:i]))
-                    print(points[i+1:])
-                    output += Line.break_up(points[i+1:])
-                    print(points)
-                    return output
-                else:
-                    output.append(LinePart(points))
-                    return output
+
+            next = points[i + 1]
+            diff = next.input - current.input
+
+            # print(abs(diff))
+
+
+            s = diff
+            check = ((abs(next.output - current.output - (s * current.derivative))) ** 2) / (abs(current.output) + s)
+            if abs(check) >= 50:
+                print("broken")
+                output.append(LinePart(points[:i+1]))
+                output += Line.break_up(points[i+1:])
+                return output
+
+        output.append(LinePart(points))
+        return output
 
     def break_fully(self):
         self.lineparts = Line.break_up(self.points)
 
-    def convert(self):
+    def convert(self, direction):
         output = []
         for i in self.lineparts:
-            output.append(i.convert())
+            output.append(i.convert(direction))
 
         return output

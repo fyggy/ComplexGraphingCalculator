@@ -30,7 +30,7 @@ elif precision == 1:
     step = 500
     method = "fast"
 elif precision == 2:
-    step = 1000
+    step = 5
     method = "fast"
 elif precision == 3:
     step = 2000
@@ -314,20 +314,27 @@ for line in horizontal:
     line.calculate()
     line.trim()
     line.break_fully()
-    linepoints["horizontal"].append(line.convert())
+    linepoints["horizontal"].append(line.convert(1))
 
 for line in vertical:
     line.calculate()
     line.trim()
     line.break_fully()
-    linepoints["vertical"].append(line.convert())
+    linepoints["vertical"].append(line.convert(1j))
 
 fig, ax = plt.subplots()
 tmph = linepoints["horizontal"]
-for i in range(len(tmph), 2):
-    nodes = np.array(tmph[i], tmph[i+1], tmph[i+2])
-    curve = bezier.Curve(nodes, degree=2)
-    curve.plot(num_pts=256, ax=ax)
+tmph = np.array(tmph, dtype="object")
+print(tmph)
+for line in tmph:
+    for linepart in line:
+        plt.plot(linepart[:, 0], linepart[:, 1])
+
+tmpv = linepoints["vertical"]
+tmpv = np.array(tmpv)
+for line in tmpv:
+    for linepart in line:
+        plt.plot(linepart[:, 0], linepart[:, 1])
 
 
 plt.show()
