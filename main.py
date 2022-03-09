@@ -2,7 +2,7 @@ from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo
 from sympy.core.numbers import ImaginaryUnit
 from latex2sympy_custom4.process_latex import process_sympy
 import numpy as np
-import scipy as sp
+import scipy.special as sp
 import gmpy2 as gm
 import mpmath as mp
 from mpmath import fp
@@ -16,7 +16,7 @@ import matplotlib.bezier as bz
 import sympy as sy
 
 # TODO: recive parameters
-latex = r"\sum_{n=0}^{5}\frac{5!}{n!\left(5-n\right)!}x^{5-n}\frac{1}{x}^{n}"
+latex = r"x!"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -30,7 +30,7 @@ elif precision == 1:
     step = 500
     method = "fast"
 elif precision == 2:
-    step = 5
+    step = 10
     method = "fast"
 elif precision == 3:
     step = 2000
@@ -65,8 +65,12 @@ if len(expr.free_symbols) < 1:
 elif len(expr.free_symbols) > 1:
     send_error(f"Too Many Variables: {expr.free_symbols}")
 
+elif expr.free_symbols != {x}:
+    send_error(f"Please use the variable x")
+
 # traverse expression and check if variables are valid at all points
 # TODO: add polygamma m checks
+# TODO: check for proper variables
 def check_bounds(expr, namespace=[x]):
     for i in preorder_stop(expr, Integral):
 
@@ -139,6 +143,8 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
+sy.pprint(expr)
+
 class Snippet:
     def __init__(self, name, code):
         self.name = name
@@ -166,9 +172,6 @@ class Code:
                 bot = mid + 1
         send_error(f"Fatal error: unable to find {target} among snippets")
         return False
-
-def broadcast(f):
-    return False
 
 broadcasts = {"polygamma": broadcast(fp.polygamma),
               "li": broadcast(swap(fp.li)),
@@ -229,11 +232,12 @@ if method == "fast":
         Snippet("Tuple", "[better_int({0}), better_int({1})]"),
         Snippet("Zero", "0 + 0j"),
         Snippet("beta", "sp.beta(({0}), ({1})"),
+        Snippet("factorial", "sp.gamma(({0}) + 1+0j)"),
         Snippet("gamma", "sp.gamma({0})"),
         Snippet("im", "({0}).imag"),
         Snippet("li", "_li({0})"),
         Snippet("loggamma", "sp.loggamma({0})"),
-        Snippet("polygamma", "_polygamma(({1}), ({0}))"),
+        Snippet("polygamma", "_polygamma(({0}), ({1}))"),
         Snippet("re", "({0}).real"),
         Snippet("zeta", "fp.zeta({0})"),
     ])
@@ -285,6 +289,8 @@ def create_func(expr, name):
     code = conv(expr)
     code = wrapper.format(name, code)
 
+    print(code)
+
     # TODO: set correct locals and globals
     try:
         exec(code, globals())
@@ -292,10 +298,14 @@ def create_func(expr, name):
         send_error(f"Fatal Error: {e}")
         raise e
 
-if True:
-    create_func(expr, "f")
-    create_func(expr.diff(x), "df")
 
+create_func(expr, "f")
+create_func(expr.diff(x), "df")
+
+def df(x):
+    return _polygamma(0, (x + 1))
+
+print(df(np.array([3, 4, 5])))
 
 horizontal = []
 starts = cdist(complex(botx, boty), complex(botx, topy), linestep)
@@ -324,16 +334,16 @@ for line in vertical:
 
 fig, ax = plt.subplots()
 tmph = linepoints["horizontal"]
-tmph = np.array(tmph, dtype="object")
 print(tmph)
 for line in tmph:
     for linepart in line:
+        linepart = np.array(linepart)
         plt.plot(linepart[:, 0], linepart[:, 1])
 
 tmpv = linepoints["vertical"]
-tmpv = np.array(tmpv)
 for line in tmpv:
     for linepart in line:
+        linepart = np.array(linepart)
         plt.plot(linepart[:, 0], linepart[:, 1])
 
 

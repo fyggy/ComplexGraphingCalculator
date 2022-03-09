@@ -50,6 +50,9 @@ class LinePart:
                 return (tmp, m0 * (tmp - x0) + y0)
 
     def convert(self, direction):
+        if len(self.points) == 0:
+            return []
+        print(self.points)
         output = [0] * (2 * len(self.points) - 1)
         next = self.points[0]
         z1 = next.output
@@ -96,27 +99,34 @@ class Line:
         output = []
         for i in range(len(points) - 1):
             current = points[i]
-            print(current.__class__)
-            if current == DeletedPoint:
-                while current == DeletedPoint:
+            next = points[i + 1]
+            if current == DeletedPoint or next == DeletedPoint:
+                start = i
+                while current == DeletedPoint or next == DeletedPoint:
                     i += 1
                     current = points[i]
-                print("broken2")
-                output.append(LinePart(points[:i+1]))
+                    try:
+                        next = points[i + 1]
+                    except IndexError:
+                        break
+                if start == 0:
+                    output.append(LinePart([]))
+                else:
+                    output.append(LinePart(points[:start+1]))
                 output += Line.break_up(points[i+1:])
                 return output
 
 
             next = points[i + 1]
+
             diff = next.input - current.input
 
-            # print(abs(diff))
+
 
 
             s = diff
             check = ((abs(next.output - current.output - (s * current.derivative))) ** 2) / (abs(current.output) + s)
             if abs(check) >= 50:
-                print("broken")
                 output.append(LinePart(points[:i+1]))
                 output += Line.break_up(points[i+1:])
                 return output

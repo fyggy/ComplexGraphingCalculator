@@ -1,5 +1,5 @@
 from sympy.core.compatibility import as_int
-from numpy import zeros, complex128, nan, inf
+from numpy import zeros, complex128, nan, inf, array
 
 # send an error back to php
 # TODO: create proper send_error
@@ -86,3 +86,27 @@ def better_int(n):
         return int(n)
     except OverflowError:
         return inf
+
+def broadcast(func):
+    def inner(*args):
+        casters = []
+        constants = []
+
+        for i in args:
+            print(type(array([])))
+            if type(i) == type(array([])):
+                casters.append(i)
+            else:
+                constants.append(i)
+
+        try:
+            out = zeros(len(casters[0]), dtype=complex128)
+        except IndexError:
+            return func(*args)
+
+        for i, arg in enumerate(zip(*casters)):
+            out[i] = func(*arg, *constants)
+        return out
+
+    return inner
+
