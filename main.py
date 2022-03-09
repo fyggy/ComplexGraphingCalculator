@@ -16,7 +16,7 @@ import matplotlib.bezier as bz
 import sympy as sy
 
 # TODO: recive parameters
-latex = r"x!"
+latex = r"\cot(x)"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -30,7 +30,7 @@ elif precision == 1:
     step = 500
     method = "fast"
 elif precision == 2:
-    step = 10
+    step = 1000
     method = "fast"
 elif precision == 3:
     step = 2000
@@ -143,7 +143,6 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
-sy.pprint(expr)
 
 class Snippet:
     def __init__(self, name, code):
@@ -179,7 +178,7 @@ broadcasts = {"polygamma": broadcast(fp.polygamma),
 
 def _polygamma(m, z):
     if m == 0:
-        return sp.digamma(m, z)
+        return sp.digamma(z)
     else:
         return broadcasts["polygamma"](z, m)
 
@@ -196,8 +195,6 @@ if method == "fast":
         Snippet("Catalan", "fp.catalan + 0j"),
         Snippet("Ci", "sp.sici({0})[1]"),
         Snippet("ComplexInfinity", "np.inf + 0j"),
-        Snippet("Cos", "np.cos({0})"), 
-        Snippet("Cosh", "np.cosh({0})"), 
         Snippet("Ei", "sp.exp1({0})"),
         Snippet("Equality", "({0}) == ({1})"),
         Snippet("EulerGamma", "fp.euler + 0j"),
@@ -220,18 +217,32 @@ if method == "fast":
         Snippet("Pow", "np.power(({0}), ({1}))"),
         Snippet("Rational", "{0} + 0j"),
         Snippet("Si", "sp.sici({0})[0]"),
-        Snippet("Sin", "np.sin({0})"), 
-        Snippet("Sinh", "np.sinh({0})"), 
         Snippet("StrictGreaterThan", "better_ineq({0}, {1}, ge)"),
         Snippet("StrictLessThan", "better_ineq({0}, {1}, le)"),
         Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda {var}: ({0})), {var_eqs}), {1}, method=\"r+s\")"),
         Snippet("Symbol", "{0}"),
-        Snippet("Tan", "np.tan({0})"), 
-        Snippet("Tanh", "np.tanh({0})"), 
         Snippet("TribonacciConstant", "1.839286755214161 + 0j"),
         Snippet("Tuple", "[better_int({0}), better_int({1})]"),
         Snippet("Zero", "0 + 0j"),
+        Snippet("acsc", "np.reciprocal(np.arccsc({0}))"), 
+        Snippet("acsch", "np.reciprocal(np.arccsch({0}))"), 
+        Snippet("acos", "arccos({0})"), 
+        Snippet("acosh", "arccosh({0})"), 
+        Snippet("acot", "np.reciprocal(np.arctan({0}))"), 
+        Snippet("acoth", "np.reciprocal(np.arctanh({0}))"), 
+        Snippet("asec", "np.reciprocal(np.arccos({0}))"), 
+        Snippet("asech", "np.reciprocal(np.arccosh({0}))"), 
+        Snippet("asin", "arcsin({0})"), 
+        Snippet("asinh", "arcsinh({0})"), 
+        Snippet("atan", "arctan({0})"), 
+        Snippet("atanh", "arctanh({0})"), 
         Snippet("beta", "sp.beta(({0}), ({1})"),
+        Snippet("cos", "np.cos({0})"), 
+        Snippet("cosh", "np.cosh({0})"), 
+        Snippet("cot", "np.reciprocal(np.tan({0}))"), 
+        Snippet("coth", "np.reciprocal(np.tanh({0}))"), 
+        Snippet("csc", "np.reciprocal(np.sin({0}))"), 
+        Snippet("csch", "np.reciprocal(np.sinh({0}))"), 
         Snippet("factorial", "sp.gamma(({0}) + 1+0j)"),
         Snippet("gamma", "sp.gamma({0})"),
         Snippet("im", "({0}).imag"),
@@ -239,6 +250,12 @@ if method == "fast":
         Snippet("loggamma", "sp.loggamma({0})"),
         Snippet("polygamma", "_polygamma(({0}), ({1}))"),
         Snippet("re", "({0}).real"),
+        Snippet("sec", "np.reciprocal(np.cos({0}))"), 
+        Snippet("sech", "np.reciprocal(np.cosh({0}))"), 
+        Snippet("sin", "np.sin({0})"), 
+        Snippet("sinh", "np.sinh({0})"), 
+        Snippet("tan", "np.tan({0})"), 
+        Snippet("tanh", "np.tanh({0})"), 
         Snippet("zeta", "fp.zeta({0})"),
     ])
 
@@ -289,8 +306,6 @@ def create_func(expr, name):
     code = conv(expr)
     code = wrapper.format(name, code)
 
-    print(code)
-
     # TODO: set correct locals and globals
     try:
         exec(code, globals())
@@ -302,16 +317,10 @@ def create_func(expr, name):
 create_func(expr, "f")
 create_func(expr.diff(x), "df")
 
-def df(x):
-    return _polygamma(0, (x + 1))
-
-print(df(np.array([3, 4, 5])))
-
 horizontal = []
 starts = cdist(complex(botx, boty), complex(botx, topy), linestep)
 for start, end in zip(starts, starts - botx + topx):
     horizontal.append(Line(start, end, step, f, df))
-
 
 vertical = []
 starts = cdist(complex(botx, boty), complex(topx, boty), linestep)
@@ -334,17 +343,22 @@ for line in vertical:
 
 fig, ax = plt.subplots()
 tmph = linepoints["horizontal"]
-print(tmph)
 for line in tmph:
     for linepart in line:
-        linepart = np.array(linepart)
-        plt.plot(linepart[:, 0], linepart[:, 1])
+        if linepart == [[]]:
+            pass
+        else:
+            linepart = np.array(linepart)
+            plt.plot(linepart[:, 0], linepart[:, 1], color="red")
 
 tmpv = linepoints["vertical"]
 for line in tmpv:
     for linepart in line:
-        linepart = np.array(linepart)
-        plt.plot(linepart[:, 0], linepart[:, 1])
+        if linepart == [[]]:
+            pass
+        else:
+            linepart = np.array(linepart)
+            plt.plot(linepart[:, 0], linepart[:, 1], color="blue")
 
 
 plt.show()

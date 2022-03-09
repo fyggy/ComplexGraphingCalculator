@@ -93,7 +93,6 @@ def broadcast(func):
         constants = []
 
         for i in args:
-            print(type(array([])))
             if type(i) == type(array([])):
                 casters.append(i)
             else:
