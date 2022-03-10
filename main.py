@@ -1,4 +1,6 @@
-from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I
+from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I, Function
+from sympy import gamma as sGamma
+from sympy import zeta as sZeta
 from sympy.core.numbers import ImaginaryUnit
 from latex2sympy_custom4.process_latex import process_sympy
 import numpy as np
@@ -16,7 +18,7 @@ import matplotlib.bezier as bz
 import sympy as sy
 
 # TODO: recive parameters
-latex = r"\cot(x)"
+latex = r"\zeta(x)"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -55,8 +57,10 @@ PI = Symbol("pi")
 e = Symbol("e")
 gamma = Symbol("gamma")
 i = Symbol("i")
+Gamma = Function("Gamma")
+zeta = Function("zeta")
 
-expr = expr.subs([[PI, pi], [e, E], [gamma, EulerGamma], [i, I]])
+expr = expr.subs([[PI, pi], [e, E], [gamma, EulerGamma], [i, I], [Gamma, sGamma], [zeta, sZeta]])
 
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
@@ -143,6 +147,7 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
+sy.pprint(expr)
 
 class Snippet:
     def __init__(self, name, code):
@@ -195,6 +200,7 @@ if method == "fast":
         Snippet("Catalan", "fp.catalan + 0j"),
         Snippet("Ci", "sp.sici({0})[1]"),
         Snippet("ComplexInfinity", "np.inf + 0j"),
+        Snippet("Derivative", "fp.diff(error_wrapper(ft.partial(lambda {var}: ({0}), {var_eqs})), x, n={1})"),
         Snippet("Ei", "sp.exp1({0})"),
         Snippet("Equality", "({0}) == ({1})"),
         Snippet("EulerGamma", "fp.euler + 0j"),
@@ -278,22 +284,30 @@ def conv(expr):
         else:
             return head_code
 
-    if head.__name__ == "Tuple":
-        args = args[1:]
-
     if head.__name__ in ["Add", "Mul"]:
         args = expr.as_two_terms()
-        
 
-    arg_codes = (conv(i) for i in args)
+    arg_codes = [conv(i) for i in args]
+
+    if head.__name__ == "Tuple":
+        return str([better_int(i) for i in arg_codes[1:]])
 
     if head.__name__ == "Sum":
         lambda_vars = list((args[0].free_symbols).difference(expr.bound_symbols))
-        return head_code.format(*arg_codes, var=", ".join([str(i) for i in expr.bound_symbols]) + ", " +
-                                                ", ".join([str(i) for i in lambda_vars]),
+        return head_code.format(arg_codes[0], str([*arg_codes[1:]]), var=", ".join([str(i) for i in expr.bound_symbols]) + ", " +
+                                ", ".join([str(i) for i in lambda_vars]),
+                                var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
+
+    elif head.__name__ == "Derivative":
+        dummy = str(args[1][0])
+        print(arg_codes)
+        lambda_vars = list((args[0].free_symbols).difference({dummy}))
+        return head_code.format(arg_codes[0], arg_codes[1][0],
+                                var=str(dummy) + ", " + ", ".join([str(i) for i in lambda_vars]),
                                 var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
 
     else:
+        print(expr)
         return head_code.format(*arg_codes)
 
 # TODO: write wrapper
