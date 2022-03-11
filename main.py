@@ -58,9 +58,9 @@ e = Symbol("e")
 gamma = Symbol("gamma")
 i = Symbol("i")
 Gamma = Function("Gamma")
-zeta = Function("zeta")
+func_zeta = Function("zeta")
 
-expr = expr.subs([[PI, pi], [e, E], [gamma, EulerGamma], [i, I], [Gamma, sGamma], [zeta, sZeta]])
+expr = expr.subs([[PI, pi], [e, E], [gamma, EulerGamma], [i, I], [Gamma, sGamma], [func_zeta, sZeta]])
 
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
@@ -147,8 +147,6 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
-sy.pprint(expr)
-
 class Snippet:
     def __init__(self, name, code):
         self.name = name
@@ -181,6 +179,8 @@ broadcasts = {"polygamma": broadcast(fp.polygamma),
               "li": broadcast(swap(fp.li)),
               "zeta": broadcast(fp.zeta)}
 
+globals().update(broadcasts)
+
 def _polygamma(m, z):
     if m == 0:
         return sp.digamma(z)
@@ -200,7 +200,7 @@ if method == "fast":
         Snippet("Catalan", "fp.catalan + 0j"),
         Snippet("Ci", "sp.sici({0})[1]"),
         Snippet("ComplexInfinity", "np.inf + 0j"),
-        Snippet("Derivative", "fp.diff(error_wrapper(ft.partial(lambda {var}: ({0}), {var_eqs})), x, n={1})"),
+        Snippet("Derivative", "fp.diff(error_wrapper(ft.partial((lambda {var}: ({0})), {var_eqs})), x, n={1})"),
         Snippet("Ei", "sp.exp1({0})"),
         Snippet("Equality", "({0}) == ({1})"),
         Snippet("EulerGamma", "fp.euler + 0j"),
@@ -262,7 +262,7 @@ if method == "fast":
         Snippet("sinh", "np.sinh({0})"), 
         Snippet("tan", "np.tan({0})"), 
         Snippet("tanh", "np.tanh({0})"), 
-        Snippet("zeta", "fp.zeta({0})"),
+        Snippet("zeta", "zeta({0})"),
     ])
 
     # code_snippets.sort(key=lambda x: x.name)
@@ -290,7 +290,7 @@ def conv(expr):
     arg_codes = [conv(i) for i in args]
 
     if head.__name__ == "Tuple":
-        return str([better_int(i) for i in arg_codes[1:]])
+        return str([f"better_int({i})" for i in arg_codes[1:]])
 
     if head.__name__ == "Sum":
         lambda_vars = list((args[0].free_symbols).difference(expr.bound_symbols))
@@ -299,15 +299,15 @@ def conv(expr):
                                 var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
 
     elif head.__name__ == "Derivative":
-        dummy = str(args[1][0])
-        print(arg_codes)
+        dummy = args[1][0]
+        degree = args[1][1]
         lambda_vars = list((args[0].free_symbols).difference({dummy}))
-        return head_code.format(arg_codes[0], arg_codes[1][0],
+        dummy = str(dummy)
+        return head_code.format(arg_codes[0], degree, 
                                 var=str(dummy) + ", " + ", ".join([str(i) for i in lambda_vars]),
                                 var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
 
     else:
-        print(expr)
         return head_code.format(*arg_codes)
 
 # TODO: write wrapper
@@ -320,6 +320,8 @@ def create_func(expr, name):
     code = conv(expr)
     code = wrapper.format(name, code)
 
+    print(code)
+    
     # TODO: set correct locals and globals
     try:
         exec(code, globals())
@@ -328,9 +330,18 @@ def create_func(expr, name):
         raise e
 
 
+
 create_func(expr, "f")
 create_func(expr.diff(x), "df")
 
+def df(x):
+    print(x)
+    return broadcast(lambda x__1: mp.diff((lambda x__0, : (zeta(x__0))), x__1, n=1))(x)
+
+mp.mp.dps = 15
+
+print(df(2.0+0j))
+input()
 horizontal = []
 starts = cdist(complex(botx, boty), complex(botx, topy), linestep)
 for start, end in zip(starts, starts - botx + topx):
