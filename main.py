@@ -21,9 +21,9 @@ import sys
 sys.setrecursionlimit(2010)
 
 # TODO: recive parameters
-latex = r"x"
-botx, topx = -10, 10
-boty, topy = -10, 10
+latex = r"x^{x^{x}}"
+botx, topx = -1, 1
+boty, topy = -1, 1
 linestep = 0.1
 precision = 2
 
