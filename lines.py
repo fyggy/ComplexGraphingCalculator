@@ -1,5 +1,6 @@
 from numpy import linspace, isnan, isinf, complex128, sign
 from mpmath import fp
+from helpers import better_round
 
 # TODO: verify if getters are nessessary
 class Point:
@@ -9,7 +10,7 @@ class Point:
         self.derivative = derivative
 
     def __str__(self):
-        return f"({self.input}, {self.output})"
+        return f"({self.input}, {self.output}, {self.derivative})"
 
 class DeletedPoint(Point):
     input = None
@@ -26,6 +27,8 @@ class LinePart:
         x1, y1 = z1.real, z1.imag
         d0 *= direction
         d1 *= direction
+        d0 = better_round(d0)
+        d1 = better_round(d1)
         if d0.real == 0 and d1.real == 0:
             tmp = (z0 + z1) / 2
             return (tmp.real, tmp.imag)
@@ -122,7 +125,8 @@ class Line:
 
 
             check = ((abs(next.output - (current.output + (s * current.derivative)))) ** 2) / (abs(current.output) + s)
-            if abs(check) >= (abs(current.derivative)):
+            # print(abs(current.derivative))
+            if abs(check)+0.1 >= (abs(current.derivative)):
                 print("broken")
                 output.append(LinePart(points[:i+1]))
                 output += Line.break_up(points[i+1:])

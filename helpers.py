@@ -34,7 +34,8 @@ def cdist(start, end, step):
     delta = end - start
     difference = (delta / abs(delta)) * step
 
-    num = int(abs(end - start) // step) + 1
+    num = int(abs(end - start) / step) + 1
+
     current = start
 
     out = zeros(num, dtype=complex128)
@@ -110,3 +111,6 @@ def broadcast(func):
 
     return inner
 
+
+def better_round(x, deg=15):
+    return complex(round(x.real, deg), round(x.imag, deg))

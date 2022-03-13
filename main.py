@@ -14,17 +14,17 @@ from operator import lt, le, gt, ge
 from helpers import *
 from lines import *
 import matplotlib.pyplot as plt
-import matplotlib.bezier as bz
+
 import sympy as sy
 import sys
 
 sys.setrecursionlimit(2010)
 
 # TODO: recive parameters
-latex = r"\sqrt{x}"
+latex = r"x"
 botx, topx = -10, 10
 boty, topy = -10, 10
-linestep = 1
+linestep = 0.1
 precision = 2
 
 # assign precision settings
@@ -35,7 +35,7 @@ elif precision == 1:
     step = 500
     method = "fast"
 elif precision == 2:
-    step = 10
+    step = 1000
     method = "fast"
 elif precision == 3:
     step = 2000
@@ -418,7 +418,7 @@ for line in tmph:
             pass
         else:
             linepart = np.array(linepart)
-            plt.scatter(linepart[:, 0], linepart[:, 1], color="red")
+            plt.plot(linepart[:, 0], linepart[:, 1], color="red")
 
 tmpv = linepoints["vertical"]
 for line in tmpv:
@@ -427,7 +427,10 @@ for line in tmpv:
             pass
         else:
             linepart = np.array(linepart)
-            plt.scatter(linepart[:, 0], linepart[:, 1], color="blue")
+
+
+            plt.plot(linepart[:, 0], linepart[:, 1], color="blue")
+
 
 
 plt.show()
