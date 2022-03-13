@@ -17,29 +17,333 @@
 
 <body>
     <section class="main clearfix">
+        <br>
         <h1 class="title">Complex Graphing Calculator</h1>
         <div class="inputContainer">
-            <div class="spanBox"><span id="fEquals">f(x)=</span></div>
+            <div class="spanBox"><span class="render">f(x)=</span></div>
             <div class="inputBox"><p class="inputWrap"><span id="input" class="center"></span></p></div>
             <div class="errorBox"><img src="media/checked.png" alt="Input Accepted" class="acceptanceImg"></div>
         </div>
         <br>
-        <form action="graph.php" method="get">
+        <div style="height: 141px;">
+        <form action="graph.php" method="GET" class="form">
 
         <div class="bounds">
             <p class="label">Graph lines between: </p>
-            <input type="number" name="lowerx" id="lowerx">
+            <input class="numBox" type="number" name="lowerx" id="lowerx" min="-100000000" max="100000000" step="0.001" size=12>
+            <p class="numBox"><span class="render"><\Re(x)<</span></p>
+            <input class="numBox cleafix" type="number" name="upperx" id="upperx" min="-100000000" max="100000000" step="0.001" size=12>
+            <span title="Defines the size of the input space. For example, -10 < Re(x) < 10 and -10 < Im(x) < 10 gives a square of side length 20 centered at 0"><img src="media/qMark.png" alt="Mouse Over for explanation" class="qMark"></span>
+            <br>
+            <br>
+            <input class="numBox2" type="number" name="lowery" id="lowery" min="-100000000" max="100000000" step="0.001" size=12>
+            <p class="numBox2"><span class="render"><\Im(x)<</span></p>
+            <input class="numBox2" style="left: 4.66px" type="number" name="uppery" id="uppery" min="-100000000" max="100000000" step="0.001" size=12>
+            <br>
+            <br>
+            <p class="label numBox2">Spaced by:</p>
+            <br>
+            <input class="numBox2" type="number" name="linestep" id="linestep" min="-100000000" max="100000000" step="0.001" size=12>
+            <span title="The distance between each line"><img src="media/qMark.png" alt="Mouse Over for explanation" class="qMark" style="bottom: 17px"></span>
         </div>
 
+        <div class="precision">
+            <p class="label">Precision: </p>
+            <select name="precision" id="precision">
+                <option value="0">Low</option>
+                <option value="1">Medium</option>
+                <option value="2">High</option>
+                <option value="3">Extreme</option>
+            </select>
+            <span title="Controls the number of sampling points, to increase the precision"><img src="media/qMark.png" alt="Mouse Over for explanation" class="qMark"></span>
+        </div>
+
+        <div class="view">
+            <p class="label">Center view at: </p>
+            <input class="numBox" type="number" name="centerx" id="centerx" min="-100000000" max="100000000" step="0.001" size=12>
+            <p class="numBox"><span class="render">+</span></p>
+            <input class="numBox" type="number" name="centery" id="centery" min="-100000000" max="100000000" step="0.001" size=12>
+            <p class="numBox"><span class="render">i</span></p>
+            <span title="The point at the center of the screen"><img src="media/qMark.png" alt="Mouse Over for explanation" class="qMark"></span>
+
+            <br>
+            <br>
+            <p class="label">With radius: </p>
+            <input class="numBox" type="number" name="radius" id="radius" min="-100000" max="100000" step="0.001" size=12>
+            <span title="The width of the graph view. For example, a radius of 10 centered at 0+0i would run from -10 to 10, with (0, 0) at the center"><img src="media/qMark.png" alt="Mouse Over for explanation" class="qMark"></span>
+
+        </div>
+
+        <input type="submit" value="Graph" name="submit" id="submit">
+
         </form>
+        </div>
+
+        <div class="form">
+            <h2 class="subtitle">If you're confused, click here</h2>
+            <a href="what.html">What does this site do?</a>
+        </div>
+        <br>
+        <div class="form">
+        <h2 class="subtitle">Documentation</h2>
+        <table class="docTable">
+            <tr>
+                <th>Name</th>
+                <th style="width:15%;">Code</th>
+                <th>Description</th>
+                <th>Example</th>
+                <th>Documentation</th>
+            </tr>
+            <tr>
+                <td>Addition</td>
+                <td><code>+</code></td>
+                <td>Normal addition</td>
+                <td><span class="render">x+3</span></td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td>Subtraction</td>
+                <td><code>-</code></td>
+                <td>Normal subtraction</td>
+                <td><span class="render">x-4</span></td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td>Multiplication</td>
+                <td><code>*</code></td>
+                <td>Normal multiplication</td>
+                <td><span class="render">3\cdot x</span></td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td>Division</td>
+                <td><code>/</code></td>
+                <td>Normal division. Creates a fraction</td>
+                <td><span class="render">\frac{2}{x}</span></td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td>Exponentiation</td>
+                <td><code>^</code></td>
+                <td>Repeated multiplication</td>
+                <td><span class="render">x^{3}</span></td>
+                <td><a href="https://dlmf.nist.gov/4.2#iv">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Square Root</td>
+                <td><code>sqrt</code></td>
+                <td>Inverse of squaring; <span class="render">\sqrt{x^{2}} = \sqrt{x}^{2} = x</span>.
+                    Equivalent to <span class="render">x^{\frac{1}{2}}</span></td>
+                <td><span class="render">\sqrt{x}</span></td>
+                <td><a href="https://dlmf.nist.gov/4.2#iv">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Natural Logarithm</td>
+                <td><code>ln</code></td>
+                <td>Inverse of exponentiation with the base <span class="render">e</span>;
+                    <span class="render">e^{\ln(x)}=\ln(e^{x})=x</span></td>
+                <td><span class="render">\ln(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.2#ii">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Sin, Cos, Tan</td>
+                <td><code>sin</code>, <code>cos</code>, <code>tan</code></td>
+                <td>Standard trigonometric functions. In a right angled triangle with hypotenuse 1 and
+                    angle <span class="render">\theta</span>, <span class="render">\sin(\theta)</span> is the length of
+                the side opposite the angle, <span class="render">\cos(\theta)</span> is the length of the side adjacent to the angle
+                , and <span class="render">\tan(\theta)=\frac{\sin(\theta)}{\cos(\theta)}.</span></td>
+                <td><span class="render">\sin(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.14">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Csc, Sec, Cot</td>
+                <td><code>csc</code>, <code>sec</code>, <code>cot</code></td>
+                <td>Reciprocals of standard trigonometric functions. <span class="render">\csc(\theta)=\frac{1}{\sin(\theta)}</span>,
+                <span class="render">\sec(\theta)=\frac{1}{\cos(\theta)}</span>, <span class="render">\cot(\theta)=\frac{1}{\tan(\theta)}</span></td>
+                <td><span class="render">\sec(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.14">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Arcsin, Arccos, Arctan</td>
+                <td><code>arcsin</code>, <code>arccos</code>, <code>arctan</code></td>
+                <td>Inverses of standard trigonometric functions; <span class="render">\arcsin(\sin(x))=\sin(\arcsin(x))=x</span>, etc</td>
+                <td><span class="render">\arccos(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.23">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Arccsc, Arcsec, Arccot</td>
+                <td><code>arccsc</code>, <code>arcsec</code>, <code>arccot</code></td>
+                <td>Inverses of reciprocals of standard trigonometric functions; <span class="render">\arccsc(\csc(x))=\csc(\arccsc(x))=x</span>, etc</td>
+                <td><span class="render">\arcsec(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.23">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Hyperbolic Sin, Cos, Tan</td>
+                <td><code>sinh</code>, <code>cosh</code>, <code>tanh</code></td>
+                <td>The even and odd parts of <span class="render">e^{x}</span>;
+                    <span class="render">\sinh(x)=\frac{e^{x}-e^{-x}}{2}</span>,
+                    <span class="render">\cosh(x)=\frac{e^{x}+e^{-x}}{2}</span>,
+                    <span class="render">\tanh(x)=\frac{\sinh(x)}{\cosh(x)}</span></td>
+                <td><span class="render">\cosh(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.28">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Hyperbolic Csc, Sec, Cot</td>
+                <td><code>csch</code>, <code>sech</code>, <code>coth</code></td>
+                <td>Reciprocals of hyperbolic trigonometric functions. <span class="render">\csch(\theta)=\frac{1}{\sinh(\theta)}</span>,
+                <span class="render">\sech(\theta)=\frac{1}{\cosh(\theta)}</span>, <span class="render">\coth(\theta)=\frac{1}{\tanh(\theta)}</span></td>
+                <td><span class="render">\sech(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.28">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Hyperbolic Arcsin, Arccos, Arctan</td>
+                <td><code>arcsinh</code>, <code>arccosh</code>, <code>arctanh</code></td>
+                <td>Inverses of hyperbolic trigonometric functions; <span class="render">\arcsinh(\sinh(x))=\sinh(\arcsinh(x))=x</span>, etc</td>
+                <td><span class="render">\arccosh(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.37">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Hyperbolic Arccsc, Arcsec, Arccot</td>
+                <td><code>arccsch</code>, <code>arcsech</code>, <code>arccoth</code></td>
+                <td>Inverses of reciprocals of hyperbolic trigonometric functions; <span class="render">\arccsch(\csch(x))=\csch(\arccsch(x))=x</span>, etc</td>
+                <td><span class="render">\arcsech(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/4.37">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Generalised Summation</td>
+                <td><code>sum</code></td>
+                <td>Uses a dummy variable, and sums a function of that variable as it varys from a lower bound to a upper bound
+                    in integer steps. Bounds may be infinite, but must be integers, with the top bound greater than the bottom bound</td>
+                <td><span class="render">\sum_{n=1}^{\infty}\frac{1}{n^{x}}</span></td>
+                <td><a href="https://mathworld.wolfram.com/Sum.html">Wolfram Mathworld</a></td>
+            </tr>
+            <tr>
+                <td>Differentiation</td>
+                <td><code>d/dx</code></td>
+                <td>Transforms its arguments, giving the gradient of the tangent line at an input point</td>
+                <td><span class="render">\frac{d}{dx}e^{x}</span></td>
+                <td><a href="https://dlmf.nist.gov/1.4#iii">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Gamma Function and Factorial</td>
+                <td><code>Gamma</code> or <code>!</code></td>
+                <td>The factorial function is <span class="render">x!=1\cdot 2\cdot 3\cdot ... \cdot (x-1) \cdot x</span>, and
+                the gamma function is an extensions of this function to non-integer inputs. However, due to conventions,
+                <span class="render">\Gamma(x)=(x-1)!</span></td>
+                <td><span class="render">\Gamma(x!)</span></td>
+                <td><a href="https://dlmf.nist.gov/5.2">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Digamma Function</td>
+                <td><code>psi</code></td>
+                <td>The derivative of the natural logarithm of the gamma function</td>
+                <td><span class="render">\psi(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/5.2">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Polygamma Function</td>
+                <td><code>psi</code></td>
+                <td>Similar to the digamma function, these are the mth derivatives of the natural logarithm of the gamma function.
+                The first input, m, must be a constant integer</td>
+                <td><span class="render">\psi(3, x)</span></td>
+                <td><a href="https://dlmf.nist.gov/5.15">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Riemann Zeta Function</td>
+                <td><code>zeta</code></td>
+                <td>An important function defined as the analytic continuation of <span class="render">\sum_{n=1}^{\infty}\frac{1}{n^{x}}</span></td>
+                <td><span class="render">\zeta(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/25.2">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Hurwitz Zeta Function</td>
+                <td><code>zeta</code></td>
+                <td>A variant of the zeta function, defined as the analytic continuation of <span class="render">\sum_{n=1}^{\infty}\frac{1}{\left(n+a\right)^{x}}</span></td>
+                <td><span class="render">\zeta(x, 23)</span></td>
+                <td><a href="https://dlmf.nist.gov/25.11#E1">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Polylogarithms</td>
+                <td><code>Li</code></td>
+                <td>An extension of the idea of the natural logarithm. Defined as the analytic continuation of
+                <span class="render">\sum_{n=1}^{\infty}\frac{x^{n}}{n^{s}}</span></td>
+                <td><span class="weirdo">Li(x, 4)</span></td>
+                <td><a href="https://dlmf.nist.gov/25.12#ii">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Lerch's Transcendent</td>
+                <td><code>Phi</code></td>
+                <td>A generalisation of all the functions above. defined as the analytic continuation of
+                    <span class="render">\sum_{n=0}^{\infty}\frac{x^{n}}{\left(a+n\right)^{s}}</span></td>
+                <td><span class="render">\Phi(x, 4, 15)</span></td>
+                <td><a href="https://dlmf.nist.gov/25.14">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Exponential Integral</td>
+                <td><code>Ei</code></td>
+                <td>Similar to exponential function, defined as <span class="render">\int_{-\infty}^{x}\frac{e^{t}}{t}dt</span></td>
+                <td><span class="weirdo">Ei(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/6.2#i.p3">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Logarithmic Integral</td>
+                <td><code>li</code></td>
+                <td>Similar to the natural logarithm, defined as <span class="render">\int_{0}^{x}\frac{1}{\ln t}dt</span></td>
+                <td><span class="weirdo">li(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/6.2#E8">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Sinusoidal Integral</td>
+                <td><code>Si</code></td>
+                <td>Similar to the sine function, defined as<span class="render">\int_{0}^{x}\frac{\sin t}{t}dt</span></td>
+                <td><span class="weirdo">Si(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/6.2#E9">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Cosinusoidal Integral</td>
+                <td><code>Ci</code></td>
+                <td>Similar to the cosine function, defined as <span class="render">-\int_{x}^{\infty}\frac{\cos t}{t}dt</span></td>
+                <td><span class="weirdo">Ci(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/6.2#E11">DLMF</a></td>
+            </tr>
+            <tr>
+                <td>Airy Bessel Functions</td>
+                <td><code>Ai</code> and <code>Bi</code></td>
+                <td>Defined as the solutions to <span class="render">\frac{d^{2}y}{dx^{2}}=yx</span></td>
+                <td><span class="weirdo">Ai(x), Bi(x)</span></td>
+                <td><a href="https://dlmf.nist.gov/9.2">DLMF</a></td>
+            </tr>
+
+
+        </table>
+        </div>
+        <br>
+        <br>
+        <br>
 
         <footer>
             <a href="https://www.flaticon.com/free-icons/user-interface" title="user interface icons">User interface icons created by kliwir art - Flaticon</a>
+            <br>
+            <a href="https://www.flaticon.com/free-icons/question" title="question icons">Question icons created by Dave Gandy - Flaticon</a>
         </footer>
     </section>
 <script>
-    MQ.StaticMath(document.getElementById("fEquals"))
-    var inputSpan = document.getElementById('input');
+    statics = document.getElementsByClassName("render")
+    l = statics.length
+    for (i = 0; i < l; i++) {
+        MQ.StaticMath(statics[i])
+    }
+
+    weirdos = document.getElementsByClassName("weirdo")
+    l = statics.length
+    for (i = 0; i < l; i++) {
+        MQ.MathField(weirdos[i], {
+        autoOperatorNames: "Li Ei li Ci Si Ai Bi"
+    })
+    }
+
+
+    inputSpan = document.getElementById("input")
     var inputMathField = MQ.MathField(inputSpan, {
         spaceBehavesLikeTab: false,
         leftRightIntoCmdGoes: 'up',
@@ -48,8 +352,8 @@
         supSubsRequireOperand: true,
         charsThatBreakOutOfSupSub: '+-=<>',
         autoSubscriptNumerals: true,
-        autoCommands: 'pi gamma Gamma psi zeta sqrt nthroot sum Phi',
-        autoOperatorNames: 'sin cos tan arcsin arccos arctan csc sec cot arccsc arcsec arccot sinh cosh tanh arcsinh arccosh arctanh csch sech coth arccsch arcsech arccoth Ai Bi Ci Ei Li Si',
+        autoCommands: 'pi gamma Gamma psi zeta sqrt nthroot sum Phi infty',
+        autoOperatorNames: 'ln sin cos tan arcsin arccos arctan csc sec cot arccsc arcsec arccot sinh cosh tanh arcsinh arccosh arctanh csch sech coth arccsch arcsech arccoth Ai Bi Ci Ei Li li Si',
         maxDepth: 10,
     handlers: {
       edit: function() {

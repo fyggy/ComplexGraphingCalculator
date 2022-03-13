@@ -1,7 +1,12 @@
 * {
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
     font-family: "Atkinson Hyperlegible";
+}
+
+@font-face {
+    font-family: "Cambria Math Numbers";
+    unicode-range: U+30-39;
 }
 
 body {
@@ -9,16 +14,17 @@ body {
 }
 
 .main {
-    margin-left: auto;
-    margin-right: auto;
+    margin: 20px auto;
     width: 1100px;
-    height: 100vh;
+    height: max(100vh, 100%);
     background-color: white;
+    border-radius: 10px;
 }
 
 .title {
     text-align: center;
-    font-size: 28px;
+    font-size: 36px;
+    margin-top: 15px;
     margin-bottom: 20px;
 }
 
@@ -30,7 +36,7 @@ body {
     width: 800px;
     height: 200px;
     border-width: 2px;
-    border-radius: 10px 0px 0px 10px;
+    border-radius: 10px 0 0 10px;
     border-color: green;
     overflow: hidden;
 }
@@ -61,12 +67,8 @@ body {
     width: 50px;
     height: 200px;
     float: left;
-    border-radius: 0px 10px 10px 0px;
+    border-radius: 0 10px 10px 0;
     background-color: green;
-}
-
-.clearfix {
-    overflow: auto;
 }
 
 .clearfix::after {
@@ -84,8 +86,122 @@ body {
     height: 30px;
 }
 
+.form {
+    width: 850px;
+    margin-left: 150px;
+
+}
+
+.bounds {
+    width: 35%;
+    float: left;
+}
+
+.precision {
+    width: 20%;
+    float: left;
+    position: relative;
+    left: 20px;
+}
+
+.view {
+    width: 30%;
+    float: left;
+}
+
+.numBox {
+    float: left;
+}
+
+.numBox2 {
+    float: left;
+    position: relative;
+    bottom: 16px
+}
+
+.qMark {
+    width: 12px;
+    height: 12px;
+    position: relative;
+    left: 5px;
+    filter: opacity(65%);
+}
+
+#submit {
+    position: relative;
+    top: 78px;
+    right: 83px;
+    width: 50px;
+    height: 30px;
+}
+
+.tab {
+    display: inline-block;
+    margin-left: 40px;
+}
+
+.render *, #input *, .numBox, .numBox2 {
+    font-family: "Cambria Math Numbers";
+}
+
+.equationBox {
+    margin: auto;
+    display: inline-block;
+}
+
+.equation {
+    text-align: center;
+}
+
+.subtitle {
+    margin: 15px 0;
+    font-size: 26px;
+}
+
+.explain {
+    font-size: 17px;
+}
+
+.backButton {
+    float: left;
+    clear: both;
+    margin-left: 20px
+}
+
+.docTable {
+    width: 100%
+}
+
+.docTable, table, th, td {
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 2px;
+    height: 24px
+}
+
+code {
+    font-family: "Consolas", "Courier New";
+    background-color: #cccccc;
+    border-radius: 3px;
+    margin: 2px;
+    padding: 2px;
+}
+
+.weirdo {
+    border-style: none;
+}
+
+.label {
+    font-family: "Atkinson Hyperlegible";
+}
+
 footer {
     width: 800px;
-    position: absolute;
-    bottom: 0px;
+    margin-left: 150px;
 }
+

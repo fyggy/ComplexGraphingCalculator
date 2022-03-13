@@ -1,4 +1,5 @@
 from numpy import linspace, isnan, isinf, complex128, sign
+from mpmath import fp
 
 # TODO: verify if getters are nessessary
 class Point:
@@ -100,7 +101,6 @@ class Line:
             current = points[i]
             next = points[i + 1]
             if current == DeletedPoint or next == DeletedPoint:
-                print("broken2")
                 start = i
                 while current == DeletedPoint or next == DeletedPoint:
                     i += 1
@@ -119,13 +119,14 @@ class Line:
             next = points[i + 1]
             diff = next.input - current.input
             s = diff
-            check = ((abs(next.output - current.output - (s * current.derivative))) ** 2) / (abs(current.output) + s)
-            if abs(check) >= 50:
-                pass
-                # print("broken")
-                # output.append(LinePart(points[:i+1]))
-                # output += Line.break_up(points[i+1:])
-                # return output
+
+
+            check = ((abs(next.output - (current.output + (s * current.derivative)))) ** 2) / (abs(current.output) + s)
+            if abs(check) >= (abs(current.derivative)):
+                print("broken")
+                output.append(LinePart(points[:i+1]))
+                output += Line.break_up(points[i+1:])
+                return output
 
         output.append(LinePart(points))
         return output

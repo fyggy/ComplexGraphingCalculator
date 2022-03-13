@@ -16,9 +16,12 @@ from lines import *
 import matplotlib.pyplot as plt
 import matplotlib.bezier as bz
 import sympy as sy
+import sys
+
+sys.setrecursionlimit(2010)
 
 # TODO: recive parameters
-latex = r"\zeta(x)"
+latex = r"\sqrt{x}"
 botx, topx = -10, 10
 boty, topy = -10, 10
 linestep = 1
@@ -32,7 +35,7 @@ elif precision == 1:
     step = 500
     method = "fast"
 elif precision == 2:
-    step = 1000
+    step = 10
     method = "fast"
 elif precision == 3:
     step = 2000
@@ -44,10 +47,14 @@ latex = latex.replace(r"\left", "")
 
 # process expression
 # TODO: make this time out?
+expr = process_sympy(latex)
+
 try:
-    expr = process_sympy(latex)
+    pass
 except Exception as e:
     send_error(f"Invalid Syntax: {e}")
+
+print(sy.srepr(expr))
 
 expr = nsimplify(expr, rational=True)
 
@@ -147,6 +154,8 @@ try:
 except:
     send_error(f"Expression {expr} is not valid")
 
+print(sy.srepr(expr))
+
 class Snippet:
     def __init__(self, name, code):
         self.name = name
@@ -200,7 +209,7 @@ if method == "fast":
         Snippet("Catalan", "fp.catalan + 0j"),
         Snippet("Ci", "sp.sici({0})[1]"),
         Snippet("ComplexInfinity", "np.inf + 0j"),
-        Snippet("Derivative", "fp.diff(error_wrapper(ft.partial((lambda {var}: ({0})), {var_eqs})), x, n={1})"),
+        Snippet("Derivative", "lambda fp.diff(error_wrapper(ft.partial((lambda {var}: ({0})), {var_eqs})), x, n={1})"),
         Snippet("Ei", "sp.exp1({0})"),
         Snippet("Equality", "({0}) == ({1})"),
         Snippet("EulerGamma", "fp.euler + 0j"),
@@ -253,6 +262,7 @@ if method == "fast":
         Snippet("gamma", "sp.gamma({0})"),
         Snippet("im", "({0}).imag"),
         Snippet("li", "_li({0})"),
+        Snippet("log", "np.log({0})"),
         Snippet("loggamma", "sp.loggamma({0})"),
         Snippet("polygamma", "_polygamma(({0}), ({1}))"),
         Snippet("re", "({0}).real"),
@@ -274,7 +284,10 @@ elif method == "slow":
     code_snippets = Code(...)
 
 # TODO: verify that endpoints are correct
+last_name = 0
+
 def conv(expr):
+    global last_name
     head = expr.func
     args = expr.args
     head_code = code_snippets.get_by_name(head.__name__).code
@@ -286,6 +299,27 @@ def conv(expr):
 
     if head.__name__ in ["Add", "Mul"]:
         args = expr.as_two_terms()
+
+    if head.__name__ == "Derivative":
+        name1 = "inner_" + str(last_name)
+        name2 = "outer_" + str(last_name)
+        last_name += 1
+
+        dummy = args[1][0]
+        order = str(args[1][1])
+
+        create_func(args[0], name1, variables=[str(i) for i in list(args[0].free_symbols)])
+        globals()[name1] = mp.memoize(globals()[name1])
+
+        frozen_vars = list(args[0].free_symbols.difference({dummy}))
+
+        create_func(f"fp.diff(ft.partial({name1}, {', '.join([f'{i}={i}' for i in frozen_vars])}), {str(dummy)}, n={order})",
+                    name2, variables=frozen_vars + [str(dummy)], string=True)
+        globals()[name2] = broadcast(globals()[name2])
+        return f"{name2}({', '.join(frozen_vars + [str(dummy)])})"
+
+
+
 
     arg_codes = [conv(i) for i in args]
 
@@ -302,7 +336,7 @@ def conv(expr):
         dummy = args[1][0]
         degree = args[1][1]
         lambda_vars = list((args[0].free_symbols).difference({dummy}))
-        dummy = str(dummy)
+
         return head_code.format(arg_codes[0], degree, 
                                 var=str(dummy) + ", " + ", ".join([str(i) for i in lambda_vars]),
                                 var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
@@ -312,16 +346,33 @@ def conv(expr):
 
 # TODO: write wrapper
 wrapper = """
-def {0}(x):
-    return {1}
+def {0}({1}):
+    return {2}
     """
 
-def create_func(expr, name):
-    code = conv(expr)
-    code = wrapper.format(name, code)
+def create_func(expr, name, variables=["x"], string=False):
+    if not string:
+        code = conv(expr)
+    else:
+        code=expr
 
+    try:
+        real, imag = code.split("+")[0], code.split("+")[1]
+        if imag[-1] == "j":
+            try:
+                float(real)
+                float(imag[:-1])
+            except ValueError:
+                pass
+            else:
+                code = f"np.full(x.shape, {code}, dtype=np.complex128)"
+    except:
+        pass
+
+
+    code = wrapper.format(name, ", ".join(variables), code)
     print(code)
-    
+
     # TODO: set correct locals and globals
     try:
         exec(code, globals())
@@ -334,14 +385,8 @@ def create_func(expr, name):
 create_func(expr, "f")
 create_func(expr.diff(x), "df")
 
-def df(x):
-    print(x)
-    return broadcast(lambda x__1: mp.diff((lambda x__0, : (zeta(x__0))), x__1, n=1))(x)
-
 mp.mp.dps = 15
 
-print(df(2.0+0j))
-input()
 horizontal = []
 starts = cdist(complex(botx, boty), complex(botx, topy), linestep)
 for start, end in zip(starts, starts - botx + topx):
@@ -366,7 +411,6 @@ for line in vertical:
     line.break_fully()
     linepoints["vertical"].append(line.convert(1j))
 
-fig, ax = plt.subplots()
 tmph = linepoints["horizontal"]
 for line in tmph:
     for linepart in line:
@@ -374,7 +418,7 @@ for line in tmph:
             pass
         else:
             linepart = np.array(linepart)
-            plt.plot(linepart[:, 0], linepart[:, 1], color="red")
+            plt.scatter(linepart[:, 0], linepart[:, 1], color="red")
 
 tmpv = linepoints["vertical"]
 for line in tmpv:
@@ -383,7 +427,7 @@ for line in tmpv:
             pass
         else:
             linepart = np.array(linepart)
-            plt.plot(linepart[:, 0], linepart[:, 1], color="blue")
+            plt.scatter(linepart[:, 0], linepart[:, 1], color="blue")
 
 
 plt.show()

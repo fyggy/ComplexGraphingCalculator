@@ -34,7 +34,7 @@ def cdist(start, end, step):
     delta = end - start
     difference = (delta / abs(delta)) * step
 
-    num = int(abs(end - start) // step)
+    num = int(abs(end - start) // step) + 1
     current = start
 
     out = zeros(num, dtype=complex128)
@@ -104,7 +104,8 @@ def broadcast(func):
             return func(*args)
 
         for i, arg in enumerate(zip(*casters)):
-            out[i] = func(*arg, *constants)
+
+            out[i] = func(*[complex(j) for j in arg], *[complex(j) for j in constants])
         return out
 
     return inner
