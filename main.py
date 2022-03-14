@@ -1,6 +1,4 @@
-from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I, Function
-from sympy import gamma as sGamma
-from sympy import zeta as sZeta
+from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I, Function, gamma, zeta, airyai, airybi, Ci, Ei, Si, polylog, li, polygamma, lerchphi
 from sympy.core.numbers import ImaginaryUnit
 from latex2sympy_custom4.process_latex import process_sympy
 import numpy as np
@@ -14,18 +12,17 @@ from operator import lt, le, gt, ge
 from helpers import *
 from lines import *
 import matplotlib.pyplot as plt
-
 import sympy as sy
 import sys
 
 sys.setrecursionlimit(2010)
 
 # TODO: recive parameters
-latex = r"x^{x^{x}}"
+latex = r"\frac{\sin\left(x\right)^{\cos\left(x\right)}\tan\left(x\right)+\csc\left(x\right)^{\sec\left(x\right)}\cot x}{e^{\arccsc\left(x\right)^{\operatorname{arcsec}\left(x\right)}\operatorname{arccot}\left(x\right)}}"
 botx, topx = -1, 1
 boty, topy = -1, 1
 linestep = 0.1
-precision = 2
+precision = 1
 
 # assign precision settings
 if precision == 0:
@@ -47,10 +44,8 @@ latex = latex.replace(r"\left", "")
 
 # process expression
 # TODO: make this time out?
-expr = process_sympy(latex)
-
 try:
-    pass
+    expr = process_sympy(latex)
 except Exception as e:
     send_error(f"Invalid Syntax: {e}")
 
@@ -60,14 +55,24 @@ expr = nsimplify(expr, rational=True)
 
 # replace letters with numerical constants, and initialise other sympy symbols
 x = Symbol("x")
-PI = Symbol("pi")
-e = Symbol("e")
-gamma = Symbol("gamma")
-i = Symbol("i")
-Gamma = Function("Gamma")
+sym_PI = Symbol("pi")
+sym_e = Symbol("e")
+sym_gamma = Symbol("gamma")
+sym_i = Symbol("i")
+func_Gamma = Function("Gamma")
 func_zeta = Function("zeta")
+func_polygamma = Function("psi")
+func_lerch = Function("Phi")
+func_Ai = Function("Ai")
+func_Bi = Function("Bi")
+func_Ci = Function("Ci")
+func_Ei = Function("Ei")
+func_Si = Function("Si")
+func_li = Function("li")
+func_Li = Function("Li")
 
-expr = expr.subs([[PI, pi], [e, E], [gamma, EulerGamma], [i, I], [Gamma, sGamma], [func_zeta, sZeta]])
+
+expr = expr.subs([[sym_PI, pi], [sym_e, E], [sym_gamma, EulerGamma], [sym_i, I], [func_Gamma, gamma], [func_zeta, zeta], [func_polygamma, polygamma], [func_lerch, lerchphi], [func_Ai, airyai], [func_Bi, airybi], [func_Ci, Ci], [func_Ei, Ei], [func_Si, Si], [func_li, li], [func_Li, polylog]])
 
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
@@ -202,8 +207,6 @@ if method == "fast":
     code_snippets = Code([
         Snippet("Abs", "np.absolute({0})"), 
         Snippet("Add", "np.add(({0}), ({1}))"),
-        Snippet("Ai", "sp.airy({0})[0]"),
-        Snippet("Bi", "sp.airy({0})[2]"),
         Snippet("BooleanFalse", "False"),
         Snippet("BooleanTrue", "True"),
         Snippet("Catalan", "fp.catalan + 0j"),
@@ -241,16 +244,20 @@ if method == "fast":
         Snippet("Zero", "0 + 0j"),
         Snippet("acsc", "np.reciprocal(np.arccsc({0}))"), 
         Snippet("acsch", "np.reciprocal(np.arccsch({0}))"), 
-        Snippet("acos", "arccos({0})"), 
-        Snippet("acosh", "arccosh({0})"), 
+        Snippet("acos", "np.arccos({0})"), 
+        Snippet("acosh", "np.arccosh({0})"), 
         Snippet("acot", "np.reciprocal(np.arctan({0}))"), 
         Snippet("acoth", "np.reciprocal(np.arctanh({0}))"), 
+        Snippet("airyai", "sp.airy({0})[0]"),
+        Snippet("airyaiprime", "sp.airy({0})[1]"),
+        Snippet("airybi", "sp.airy({0})[2]"),
+        Snippet("airybiprime", "sp.airy({0})[3]"),
         Snippet("asec", "np.reciprocal(np.arccos({0}))"), 
         Snippet("asech", "np.reciprocal(np.arccosh({0}))"), 
-        Snippet("asin", "arcsin({0})"), 
-        Snippet("asinh", "arcsinh({0})"), 
-        Snippet("atan", "arctan({0})"), 
-        Snippet("atanh", "arctanh({0})"), 
+        Snippet("asin", "np.arcsin({0})"), 
+        Snippet("asinh", "np.arcsinh({0})"), 
+        Snippet("atan", "np.arctan({0})"), 
+        Snippet("atanh", "np.arctanh({0})"), 
         Snippet("beta", "sp.beta(({0}), ({1})"),
         Snippet("cos", "np.cos({0})"), 
         Snippet("cosh", "np.cosh({0})"), 
@@ -261,6 +268,7 @@ if method == "fast":
         Snippet("factorial", "sp.gamma(({0}) + 1+0j)"),
         Snippet("gamma", "sp.gamma({0})"),
         Snippet("im", "({0}).imag"),
+        Snippet("lerchphi", "_lerchphi({0}, {1}, {2})"),
         Snippet("li", "_li({0})"),
         Snippet("log", "np.log({0})"),
         Snippet("loggamma", "sp.loggamma({0})"),
@@ -272,7 +280,7 @@ if method == "fast":
         Snippet("sinh", "np.sinh({0})"), 
         Snippet("tan", "np.tan({0})"), 
         Snippet("tanh", "np.tanh({0})"), 
-        Snippet("zeta", "zeta({0})"),
+        Snippet("zeta", "zeta({0}, a={1})"),
     ])
 
     # code_snippets.sort(key=lambda x: x.name)
@@ -305,20 +313,34 @@ def conv(expr):
         name2 = "outer_" + str(last_name)
         last_name += 1
 
-        dummy = args[1][0]
-        order = str(args[1][1])
+        dummies = [i[0] for i in args[1:]]
+        orders =  [i[1] for i in args[1:]]
 
-        create_func(args[0], name1, variables=[str(i) for i in list(args[0].free_symbols)])
+        string_dummies = [str(i) for i in dummies]
+        frozen_vars = list(args[0].free_symbols.difference(set(dummies)))
+        total_vars = string_dummies + frozen_vars
+        
+        create_func(args[0], name1, variables=total_vars)
         globals()[name1] = mp.memoize(globals()[name1])
 
-        frozen_vars = list(args[0].free_symbols.difference({dummy}))
 
-        create_func(f"fp.diff(ft.partial({name1}, {', '.join([f'{i}={i}' for i in frozen_vars])}), {str(dummy)}, n={order})",
-                    name2, variables=frozen_vars + [str(dummy)], string=True)
+        create_func(f"fp.diff(ft.partial({name1}, {', '.join([f'{i}={i}' for i in frozen_vars])}), {tuple(string_dummies)}, n={tuple(orders)})",
+                    name2, variables=total_vars, string=True)
         globals()[name2] = broadcast(globals()[name2])
-        return f"{name2}({', '.join(frozen_vars + [str(dummy)])})"
+        return f"{name2}({', '.join(total_vars)})"
 
+    if head.__name__ == "Sum":
+        name1 = "inner_" + str(last_name)
+        name2 = "inner_" + str(last_name)
+        last_name += 1
 
+        dummies = [i[0] for i in args[1:]]
+        lowers  = [i[1] for i in args[1:]]
+        uppers  = [i[2] for i in args[1:]]
+
+        string_dummies = [str(i) for i in dummies]
+        
+        create_func(args[0], name1, variables=args[0].free_symbols)
 
 
     arg_codes = [conv(i) for i in args]
@@ -326,23 +348,10 @@ def conv(expr):
     if head.__name__ == "Tuple":
         return str([f"better_int({i})" for i in arg_codes[1:]])
 
-    if head.__name__ == "Sum":
-        lambda_vars = list((args[0].free_symbols).difference(expr.bound_symbols))
-        return head_code.format(arg_codes[0], str([*arg_codes[1:]]), var=", ".join([str(i) for i in expr.bound_symbols]) + ", " +
-                                ", ".join([str(i) for i in lambda_vars]),
-                                var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
+    if head.__name__ == "zeta" and len(arg_codes) == 1:
+        arg_codes.append("1 + 0j")
 
-    elif head.__name__ == "Derivative":
-        dummy = args[1][0]
-        degree = args[1][1]
-        lambda_vars = list((args[0].free_symbols).difference({dummy}))
-
-        return head_code.format(arg_codes[0], degree, 
-                                var=str(dummy) + ", " + ", ".join([str(i) for i in lambda_vars]),
-                                var_eqs=", ".join([f"{str(i)}={str(i)}" for i in lambda_vars]))
-
-    else:
-        return head_code.format(*arg_codes)
+    return head_code.format(*arg_codes)
 
 # TODO: write wrapper
 wrapper = """
