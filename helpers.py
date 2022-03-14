@@ -1,5 +1,7 @@
 from sympy.core.compatibility import as_int
 from numpy import zeros, complex128, nan, inf, array
+from re import finditer
+
 
 # send an error back to php
 # TODO: create proper send_error
@@ -114,3 +116,50 @@ def broadcast(func):
 
 def better_round(x, deg=15):
     return complex(round(x.real, deg), round(x.imag, deg))
+
+def remove_bracketed(latex, target):
+    out = ""
+    i = 0
+    next = False
+    while i < len(latex):
+        char = latex[i]
+        if latex[i:].startswith(target):
+            i += len(target)
+            next = True
+        elif next and char == "}":
+            next = False
+        else:
+            out += char
+        i += 1
+    return out
+
+
+    
+    stack = []
+    removes = []
+    i = 0
+    for char in latex:
+        if char == "{":
+            stack.append("{")
+        elif latex[i:].startswith(target+"{"):
+            removes.extend(list(range(i, (i + len(target)+1))))
+            stack.append(target+"{")
+            i += len(target) + 1
+        elif char == "}":
+            if (stack.pop()).startswith(target):
+                removes.append(i)
+            
+
+        i += 1
+
+
+    print(removes)
+    out = ""
+    for i, char in enumerate(latex):
+        if i not in removes:
+            out += char
+        else:
+            print(char)
+
+    return out
+            
