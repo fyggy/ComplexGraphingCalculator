@@ -1,4 +1,6 @@
-from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I, Function, gamma, zeta, airyai, airybi, Ci, Ei, Si, polylog, li, polygamma, lerchphi
+from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I, Function, \
+    gamma,zeta, airyai, airybi, Ci, Ei, Si, polylog, li, polygamma, lerchphi, csch, sech, coth, asinh, acosh, atanh, \
+    acsch, asech, acoth
 from sympy.core.numbers import ImaginaryUnit
 from latex2sympy_custom4.process_latex import process_sympy
 import numpy as np
@@ -18,9 +20,9 @@ import sys
 sys.setrecursionlimit(2010)
 
 # TODO: recive parameters
-latex = r"\frac{\sinh\left(\operatorname{arctanh}\left(x\right)\right)^{\cosh\left(x\right)}\tanh\left(\operatorname{arccosh}\left(x\right)\right)+\operatorname{csch}\left(x\right)^{\operatorname{sech}\left(x\right)}\coth\left(\operatorname{arcsinh}\left(x\right)\right)}{e^{\operatorname{arccsch}\left(x\right)^{\operatorname{arcsech}\left(x\right)}\operatorname{arccoth}\left(x\right)}}"
-botx, topx = 1, 2
-boty, topy = 1, 2
+latex = r"\sum_{n=1}^{\infty}\frac{n!}{n^{n}}x^{n}"
+botx, topx = -1, 1
+boty, topy = -1, 1
 linestep = 0.1
 precision = 1
 
@@ -73,9 +75,24 @@ func_Ei = Function("Ei")
 func_Si = Function("Si")
 func_li = Function("li")
 func_Li = Function("Li")
+func_csch = Function("csch")
+func_sech = Function("sech")
+func_coth = Function("coth")
+func_asinh = Function("asinh")
+func_acosh = Function("acosh")
+func_atanh = Function("atanh")
+func_acsch = Function("acsch")
+func_asech = Function("asech")
+func_acoth = Function("acoth")
 
 
-expr = expr.subs([[sym_PI, pi], [sym_e, E], [sym_gamma, EulerGamma], [sym_i, I], [func_Gamma, gamma], [func_zeta, zeta], [func_polygamma, polygamma], [func_lerch, lerchphi], [func_Ai, airyai], [func_Bi, airybi], [func_Ci, Ci], [func_Ei, Ei], [func_Si, Si], [func_li, li], [func_Li, polylog]])
+expr = expr.subs([[sym_PI, pi], [sym_e, E], [sym_gamma, EulerGamma], [sym_i, I]])
+""", [func_Gamma, gamma], [func_zeta, zeta],
+                  [func_polygamma, polygamma], [func_lerch, lerchphi], [func_Ai, airyai], [func_Bi, airybi],
+                  [func_Ci, Ci], [func_Ei, Ei], [func_Si, Si], [func_li, li], [func_Li, polylog], [func_csch, csch]
+                  [func_sech, sech], [func_coth, coth], [func_asinh, asinh], [func_acosh, acosh], [func_atanh, atanh],
+                  [func_acsch, acsch], [func_asech, asech], [func_acoth, acoth]])
+                  """
 
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
@@ -192,9 +209,14 @@ class Code:
         send_error(f"Fatal error: unable to find {target} among snippets")
         return False
 
+def _zeta(x, a):
+    return fp.zeta(x, a=a)
+
 broadcasts = {"polygamma": broadcast(fp.polygamma),
-              "li": broadcast(swap(fp.li)),
-              "zeta": broadcast(fp.zeta)}
+              "li": broadcast(fp.li),
+              "_lerchphi": broadcast(error_wrapper(mp.lerchphi)),
+              "zeta": broadcast(_zeta)
+              }
 
 globals().update(broadcasts)
 
@@ -203,6 +225,8 @@ def _polygamma(m, z):
         return sp.digamma(z)
     else:
         return broadcasts["polygamma"](z, m)
+
+
 
 # TODO: write code snippets
 # TODO: fix the trig funcs
@@ -284,7 +308,7 @@ if method == "fast":
 		Snippet("sinh", "np.sinh({0})"), 
 		Snippet("tan", "np.tan({0})"), 
 		Snippet("tanh", "np.tanh({0})"), 
-		Snippet("zeta", "zeta({0}, a={1})")
+		Snippet("zeta", "zeta(({0}), ({1}))")
     ])
 
     # code_snippets.sort(key=lambda x: x.name)
@@ -322,20 +346,22 @@ def conv(expr):
 
         string_dummies = [str(i) for i in dummies]
         frozen_vars = list(args[0].free_symbols.difference(set(dummies)))
-        total_vars = string_dummies + frozen_vars
-        
+        frozen_vars_string = [str(i) for i in frozen_vars]
+        total_vars = string_dummies + frozen_vars_string
+
+
         create_func(args[0], name1, variables=total_vars)
         globals()[name1] = mp.memoize(globals()[name1])
 
 
-        create_func(f"fp.diff(ft.partial({name1}, {', '.join([f'{i}={i}' for i in frozen_vars])}), {tuple(string_dummies)}, n={tuple(orders)})",
+        create_func(f"fp.diff(ft.partial({name1}, {', '.join([f'{i}={i}' for i in frozen_vars_string])}), ({', '.join(string_dummies)}, ), n={tuple(orders)}, h=0.0001)",
                     name2, variables=total_vars, string=True)
         globals()[name2] = broadcast(globals()[name2])
         return f"{name2}({', '.join(total_vars)})"
 
     if head.__name__ == "Sum":
         name1 = "inner_" + str(last_name)
-        name2 = "inner_" + str(last_name)
+        name2 = "outer_" + str(last_name)
         last_name += 1
 
         dummies = [i[0] for i in args[1:]]
@@ -343,8 +369,22 @@ def conv(expr):
         uppers  = [i[2] for i in args[1:]]
 
         string_dummies = [str(i) for i in dummies]
+        frozen_vars = list(args[0].free_symbols.difference(set(dummies)))
+        frozen_vars_string = [str(i) for i in frozen_vars]
+        total_vars = string_dummies + frozen_vars_string
+
+        bounds = ""
+        for lower, upper in zip(lowers, uppers):
+            bounds += f"[{better_int(lower)}, {better_int(upper)}]" + ", "
         
-        create_func(args[0], name1, variables=args[0].free_symbols)
+        create_func(args[0], name1, variables=total_vars)
+        globals()[name1] = mp.memoize(globals()[name1])
+
+        create_func(f"fp.nsum(ft.partial({name1}, {', '.join([f'{i}={i}' for i in frozen_vars_string])}), {bounds})", name2,
+                    variables=frozen_vars_string, string=True)
+
+        globals()[name2] = broadcast(globals()[name2])
+        return f"{name2}({', '.join(frozen_vars_string)})"
 
 
     arg_codes = [conv(i) for i in args]
@@ -398,7 +438,7 @@ def create_func(expr, name, variables=["x"], string=False):
 create_func(expr, "f")
 create_func(expr.diff(x), "df")
 
-mp.mp.dps = 15
+mp.mp.dps = 3
 
 horizontal = []
 starts = cdist(complex(botx, boty), complex(botx, topy), linestep)
@@ -440,10 +480,6 @@ for line in tmpv:
             pass
         else:
             linepart = np.array(linepart)
-
-
             plt.plot(linepart[:, 0], linepart[:, 1], color="blue")
-
-
 
 plt.show()

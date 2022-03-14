@@ -23,12 +23,14 @@ class LinePart:
 
     @staticmethod
     def convert_single(z0, z1, d0, d1, direction):
+        z0 = better_round(z0, deg=15)
+        z1 = better_round(z1, deg=15)
         x0, y0 = z0.real, z0.imag
         x1, y1 = z1.real, z1.imag
         d0 *= direction
         d1 *= direction
-        d0 = better_round(d0)
-        d1 = better_round(d1)
+        d0 = better_round(d0, deg=15)
+        d1 = better_round(d1, deg=15)
         if d0.real == 0 and d1.real == 0:
             tmp = (z0 + z1) / 2
             return (tmp.real, tmp.imag)
@@ -42,9 +44,9 @@ class LinePart:
             return (x1, m0 * (x1 - x0) + y0)
 
         else:
+
             m0 = d0.imag / d0.real
             m1 = d1.imag / d1.real
-
             if m0 == m1:
                 tmp = (z0 + z1) / 2
                 return (tmp.real, tmp.imag)
@@ -78,6 +80,7 @@ class Line:
         self.step = step
         self.function = function
         self.dfunction = dfunction
+
         self.input = linspace(start, end, num=step, dtype=complex128)
 
     def calculate(self):

@@ -1,4 +1,5 @@
 from sympy.core.compatibility import as_int
+from sympy import oo
 from numpy import zeros, complex128, nan, inf, array
 from re import finditer
 
@@ -56,10 +57,10 @@ def isint(n):
     else:
         return True
 
-def error_wrapper(f):
+def error_wrapper(func):
     def inner(*args, **kwargs):
         try:
-            return f(*args, **kwargs)
+            return func(*args, **kwargs)
         except ValueError:
             return nan
         except OverflowError:
@@ -87,8 +88,13 @@ def better_int(n):
 
     try:
         return int(n)
-    except OverflowError:
-        return inf
+    except (OverflowError, TypeError):
+        if n == oo:
+            return inf
+        elif n == -oo:
+            return -inf
+        else:
+            raise TypeError(f"{n} is not int or inf")
 
 def broadcast(func):
     def inner(*args):
