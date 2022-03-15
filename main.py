@@ -20,11 +20,11 @@ import sys
 sys.setrecursionlimit(2010)
 
 # TODO: recive parameters
-latex = r"\sum_{n=1}^{\infty}\frac{n!}{n^{n}}x^{n}"
-botx, topx = -1, 1
-boty, topy = -1, 1
+latex = r"\sum_{n=1}^{\infty}\sum_{a=1}^{\infty}\frac{1}{n^{ax}x^{a}}"
+botx, topx = 3, 4
+boty, topy = 3, 4
 linestep = 0.1
-precision = 1
+precision = 0
 
 # assign precision settings
 if precision == 0:
@@ -174,13 +174,6 @@ def check_bounds(expr, namespace=[x]):
 if not check_bounds(expr):
     send_error(f"Expression {expr} is not valid")
 
-try:
-    expr = expr.doit()
-except:
-    send_error(f"Expression {expr} is not valid")
-
-print(sy.srepr(expr))
-
 class Snippet:
     def __init__(self, name, code):
         self.name = name
@@ -206,7 +199,7 @@ class Code:
                 top = mid - 1
             else:
                 bot = mid + 1
-        send_error(f"Fatal error: unable to find {target} among snippets")
+        raise ValueError(f"unable to find {target} among snippets")
         return False
 
 def _zeta(x, a):
@@ -389,9 +382,6 @@ def conv(expr):
 
     arg_codes = [conv(i) for i in args]
 
-    if head.__name__ == "Tuple":
-        return str([f"better_int({i})" for i in arg_codes[1:]])
-
     if head.__name__ == "zeta" and len(arg_codes) == 1:
         arg_codes.append("1 + 0j")
 
@@ -433,10 +423,21 @@ def create_func(expr, name, variables=["x"], string=False):
         send_error(f"Fatal Error: {e}")
         raise e
 
+try:
+    try:
+        done_expr = expr.doit()
+    except:
+        send_error(f"Expression {expr} is not valid")
+    create_func(done_expr, "f")
+    create_func(done_expr.diff(x), "df")
+except:
+    create_func(expr, "f")
+    create_func(expr.diff(x), "df")
+
+print(sy.srepr(done_expr))
+print(sy.srepr(expr))
 
 
-create_func(expr, "f")
-create_func(expr.diff(x), "df")
 
 mp.mp.dps = 3
 
