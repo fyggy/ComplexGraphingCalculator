@@ -135,7 +135,7 @@ class Line:
 
             check = ((abs(next.output - (current.output + (s * current.derivative)))) ** 2) / (abs(current.output) + s)
             # print(abs(current.derivative))
-            if abs(check) >= (abs((current.derivative + next.derivative) / 2)):
+            if abs(check) >= (abs((current.derivative + next.derivative) / 20)):
                 print("broken")
                 output.append(LinePart(points[:i+1]))
                 output += Line.break_up(points[i+1:])

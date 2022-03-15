@@ -1,5 +1,5 @@
 from sympy import Symbol, Integer, Rational, Float, Integral, Sum, nsimplify, oo, pi, E, EulerGamma, I, Function, \
-    gamma,zeta, airyai, airybi, Ci, Ei, Si, polylog, li, polygamma, lerchphi, csch, sech, coth, asinh, acosh, atanh, \
+    gamma, zeta, airyai, airybi, Ci, Ei, Si, polylog, li, polygamma, lerchphi, csch, sech, coth, asinh, acosh, atanh, \
     acsch, asech, acoth
 from sympy.core.numbers import ImaginaryUnit
 from latex2sympy_custom4.process_latex import process_sympy
@@ -20,11 +20,11 @@ import sys
 sys.setrecursionlimit(2010)
 
 # TODO: recive parameters
-latex = r"\sum_{n=1}^{\infty}\sum_{a=1}^{\infty}\frac{1}{n^{ax}x^{a}}"
-botx, topx = 3, 4
-boty, topy = 3, 4
+latex = r"\psi \left(x\right)"
+botx, topx = -1, 1
+boty, topy = -1, 1
 linestep = 0.1
-precision = 0
+precision = 2
 
 # assign precision settings
 if precision == 0:
@@ -85,14 +85,38 @@ func_acsch = Function("acsch")
 func_asech = Function("asech")
 func_acoth = Function("acoth")
 
+replaces = {
+    sym_PI: pi, 
+    sym_e: E, 
+    sym_gamma: EulerGamma, 
+    sym_i: I, 
+    func_Gamma: gamma, 
+    func_zeta: zeta,
+    func_polygamma: polygamma, 
+    func_lerch: lerchphi, 
+    func_Ai: airyai, 
+    func_Bi: airybi,
+    func_Ci: Ci, 
+    func_Ei: Ei, 
+    func_Si: Si, 
+    func_li: li, 
+    func_Li: polylog, 
+    func_csch: csch, 
+    func_sech: sech, 
+    func_coth: coth, 
+    func_asinh: asinh, 
+    func_acosh: acosh, 
+    func_atanh: atanh,
+    func_acsch: acsch, 
+    func_asech: asech, 
+    func_acoth: acoth, 
+}
 
-expr = expr.subs([[sym_PI, pi], [sym_e, E], [sym_gamma, EulerGamma], [sym_i, I]])
-""", [func_Gamma, gamma], [func_zeta, zeta],
-                  [func_polygamma, polygamma], [func_lerch, lerchphi], [func_Ai, airyai], [func_Bi, airybi],
-                  [func_Ci, Ci], [func_Ei, Ei], [func_Si, Si], [func_li, li], [func_Li, polylog], [func_csch, csch]
-                  [func_sech, sech], [func_coth, coth], [func_asinh, asinh], [func_acosh, acosh], [func_atanh, atanh],
-                  [func_acsch, acsch], [func_asech, asech], [func_acoth, acoth]])
-                  """
+for query in replaces:
+    expr = expr.replace(query, replaces[query])
+ 
+print(sy.srepr(expr))
+
 
 # check that expression does not have too many or too few (zero) variables
 if len(expr.free_symbols) < 1:
@@ -206,7 +230,7 @@ def _zeta(x, a):
     return fp.zeta(x, a=a)
 
 broadcasts = {"polygamma": broadcast(fp.polygamma),
-              "li": broadcast(fp.li),
+              "_li": broadcast(fp.li),
               "_lerchphi": broadcast(error_wrapper(mp.lerchphi)),
               "zeta": broadcast(_zeta)
               }
@@ -293,7 +317,7 @@ if method == "fast":
 		Snippet("li", "_li({0})"), 
 		Snippet("log", "np.log({0})"), 
 		Snippet("loggamma", "sp.loggamma({0})"), 
-		Snippet("polygamma", "_polygamma(({0}), ({1}))"), 
+		Snippet("psi", "_polygamma(({0}), ({1}))"), 
 		Snippet("re", "({0}).real"), 
 		Snippet("sec", "np.reciprocal(np.cos({0}))"), 
 		Snippet("sech", "np.reciprocal(np.cosh({0}))"), 
