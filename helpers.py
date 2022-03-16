@@ -11,12 +11,16 @@ def send_error(msg):
     input(">>> ")
 
 # generator function to traverse an expr and yield everything of an object
-# for example, if head = sy.Integral, then preorder_stop will traverse expr and yield all integrals in the expression
-# however, if an integral is nested within another integral, it will not yield that integral
+# for example, if head = sy.Sum, then preorder_stop will traverse expr and yield all sums in the expression
+# however, if an sum is nested within another sum, it will not yield that sum
 def preorder_stop(expr, head):
+
+    # check if at target
     if expr.func == head:
         yield expr
     else:
+
+        # otherwise check all branches for target
         for arg in expr.args:
             for i in preorder_stop(arg, head):
                 yield i
@@ -57,6 +61,7 @@ def isint(n):
     else:
         return True
 
+# wraps a function such that, if it throws an error, then it gets handled properly
 def error_wrapper(func):
     def inner(*args, **kwargs):
         try:
@@ -68,20 +73,30 @@ def error_wrapper(func):
 
     return inner
 
+# redefines a 2 parameter function such that the parameters are the other way round
 def swap(func):
     def inner(a, b):
         return func(b, a)
 
     return inner
 
+# allows for inequalities with complex numbers, when the imaginary part is 0
+# useful for comparing numbers, when all numbers are supposed to be complex numbers
 def better_ineq(a, b, ineq):
+
+    # part 2 of the condition will never execute if number is not 
+    # complex, due to python's short circuiting conditions
     if type(a) == complex and a.imag == 0:
         a = a.real
     if type(b) == complex and b.imag == 0:
         b = b.real
 
+    # calls operator from operator library, allowing many 
+    # operators to be implemented
     return ineq(a, b)
 
+# if a complex number has imaginary part 0, then return the real part
+# also converts from sympy infinities to numpy infinities
 def better_int(n):
     if type(n) == complex and n.imag == 0:
         n = n.real
@@ -89,6 +104,8 @@ def better_int(n):
     try:
         return int(n)
     except (OverflowError, TypeError):
+
+        # otherwise try to return an infinity
         if n == oo:
             return inf
         elif n == -oo:
@@ -96,39 +113,72 @@ def better_int(n):
         else:
             raise TypeError(f"{n} is not int or inf")
 
+# allows a function which can only be evaluated at singular points to be
+# evaluated at an array of points
+# assumes that all inputted arrays are of the same size
+# places all array
 def broadcast(func):
     def inner(*args):
         casters = []
         constants = []
-        
+        # sort args into arrays to be broadcasted, and constants to be used
         for i in args:
             if type(i) == type(array([])):
                 casters.append(i)
             else:
                 constants.append(i)
 
+        # initialises array to size of the casters
         try:
             out = zeros(len(casters[0]), dtype=complex128)
         except IndexError:
+            
+            # otherwise, just call the function, since it is made up 
+            # entirely of constants
             return func(*args)
 
+        # group casted arguments together into a tuple "arg"
         for i, arg in enumerate(zip(*casters)):
 
+            # expand out arg tuple, and then constants array
+            # call "complex" on all inputs, because mpmath does not work properly
+            # with numpy complex numbers
             out[i] = func(*[complex(j) for j in arg], *[complex(j) for j in constants])
         return out
 
     return inner
 
-
+# round complex numbers
+# rounds both the real and imaginary part
 def better_round(x, deg=15):
     return complex(round(x.real, deg), round(x.imag, deg))
 
+
+# a workaround for a strange problem
+# mathquill uses latex, and under latex, powers are supposed to be coded like
+# this: x^{2}
+# however, mathquill codes single digit powers like this: x^2
+# this only happens with single digits, for example, 
+#        2x
+#      x
+# will be coded as x^{2x}
+# this behaviour cannot be turned off, so instead, we shall use this workaround
+
+# workaround for another strange problem
+# for unrecognised functions, mathquill wraps them in operatorname{<funnamec>}
+# for example
+# Gamma(x)
+# would be coded as operatorname{\Gamma}\left(x\right)
+# this function removes this operatorname
 def remove_bracketed(latex, target):
     out = ""
     i = 0
     next = False
-    while i < len(latex):
-        char = latex[i]
+
+    # loop through each character in latex
+    for i, char in enumerate(latex):
+
+        # check if we are at target
         if latex[i:].startswith(target):
             i += len(target)
             next = True
@@ -136,7 +186,6 @@ def remove_bracketed(latex, target):
             next = False
         else:
             out += char
-        i += 1
     return out
 
 

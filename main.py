@@ -19,7 +19,7 @@ import sys
 
 sys.setrecursionlimit(2010)
 
-# TODO: recive parameters
+
 latex = r"\psi \left(x\right)"
 botx, topx = -1, 1
 boty, topy = -1, 1
@@ -256,7 +256,6 @@ if method == "fast":
 		Snippet("Catalan", "fp.catalan + 0j"), 
 		Snippet("Ci", "sp.sici({0})[1]"), 
 		Snippet("ComplexInfinity", "np.inf + 0j"), 
-		Snippet("Derivative", "lambda fp.diff(error_wrapper(ft.partial((lambda {var}: ({0})), {var_eqs})), x, n={1})"), 
 		Snippet("Ei", "sp.exp1({0})"), 
 		Snippet("Equality", "({0}) == ({1})"), 
 		Snippet("EulerGamma", "fp.euler + 0j"), 
@@ -280,8 +279,7 @@ if method == "fast":
 		Snippet("Rational", "{0} + 0j"), 
 		Snippet("Si", "sp.sici({0})[0]"), 
 		Snippet("StrictGreaterThan", "better_ineq({0}, {1}, ge)"), 
-		Snippet("StrictLessThan", "better_ineq({0}, {1}, le)"), 
-		Snippet("Sum", "fp.nsum(ft.partial(error_wrapper(lambda {var}: ({0})), {var_eqs}), {1}, method='r+s')"), 
+		Snippet("StrictLessThan", "better_ineq({0}, {1}, le)"), , 
 		Snippet("Symbol", "{0}"), 
 		Snippet("TribonacciConstant", "1.839286755214161 + 0j"), 
 		Snippet("Tuple", "[better_int({0}), better_int({1})]"), 
